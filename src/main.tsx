@@ -57,6 +57,26 @@ type HealthStatus = {
   generatedAt: string;
 };
 
+type ResearchNote = {
+  id: string;
+  modifiedAt: string;
+  path: string;
+  size: number;
+  title: string;
+};
+
+type ResearchNotesResponse = {
+  notes: ResearchNote[];
+  root: string;
+};
+
+type ResearchNoteContent = {
+  id: string;
+  markdown: string;
+  path: string;
+  title: string;
+};
+
 type LocalizedAction = {
   title: string;
   description: string;
@@ -381,6 +401,9 @@ function App() {
   const [catalogQuery, setCatalogQuery] = useState("");
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
+  const [researchNotes, setResearchNotes] = useState<ResearchNotesResponse | null>(null);
+  const [selectedResearchNote, setSelectedResearchNote] = useState<ResearchNoteContent | null>(null);
+  const [researchNotesLoading, setResearchNotesLoading] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string>("pdf");
 
   const messages = agent.data.messages ?? [];
@@ -465,6 +488,43 @@ function App() {
   useEffect(() => {
     void refreshHealth();
   }, []);
+
+  async function refreshResearchNotes() {
+    setResearchNotesLoading(true);
+    try {
+      const response = await fetch("/api/research-notes");
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+      const payload = (await response.json()) as ResearchNotesResponse;
+      setResearchNotes(payload);
+      if (selectedResearchNote && !payload.notes.some((note) => note.id === selectedResearchNote.id)) {
+        setSelectedResearchNote(null);
+      }
+    } catch {
+      setResearchNotes({ notes: [], root: "" });
+    } finally {
+      setResearchNotesLoading(false);
+    }
+  }
+
+  async function openResearchNote(id: string) {
+    const response = await fetch(`/api/research-notes?id=${encodeURIComponent(id)}`);
+    if (!response.ok) {
+      return;
+    }
+    setSelectedResearchNote((await response.json()) as ResearchNoteContent);
+  }
+
+  useEffect(() => {
+    void refreshResearchNotes();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedResearchNote && researchNotes?.notes[0]) {
+      void openResearchNote(researchNotes.notes[0].id);
+    }
+  }, [researchNotes, selectedResearchNote]);
 
   const selectedSkillData = catalog?.skills.find((skill) => skill.name === selectedSkill);
   const permissionSummary = useMemo(() => getPermissionSummary(catalog), [catalog]);
@@ -672,6 +732,16 @@ function App() {
                   })}
                 </div>
               </section>
+
+              <ResearchCollections
+                lang={lang}
+                loading={researchNotesLoading}
+                note={selectedResearchNote}
+                notes={researchNotes?.notes ?? []}
+                onOpen={openResearchNote}
+                onRefresh={refreshResearchNotes}
+                root={researchNotes?.root ?? ""}
+              />
 
               <section className="pdf-workbench" aria-label={t(lang, "workbench.pdf.title")}>
                 <div className="pdf-workbench-header">
@@ -1006,6 +1076,81 @@ function HealthPanel({
   );
 }
 
+function ResearchCollections({
+  lang,
+  loading,
+  note,
+  notes,
+  onOpen,
+  onRefresh,
+  root,
+}: {
+  lang: Lang;
+  loading: boolean;
+  note: ResearchNoteContent | null;
+  notes: ResearchNote[];
+  onOpen: (id: string) => void;
+  onRefresh: () => void;
+  root: string;
+}) {
+  return (
+    <section className="research-collections" aria-label={t(lang, "collections.title")}>
+      <div className="research-collections-header">
+        <div>
+          <p className="eyebrow">{t(lang, "collections.eyebrow")}</p>
+          <h3>{t(lang, "collections.title")}</h3>
+        </div>
+        <button
+          className="tooltip-control"
+          data-tooltip={t(lang, "collections.refreshTooltip")}
+          disabled={loading}
+          onClick={onRefresh}
+          title={t(lang, "collections.refreshTooltip")}
+          type="button"
+        >
+          <RotateCcw size={15} />
+          {loading ? t(lang, "health.checking") : t(lang, "health.refresh")}
+        </button>
+      </div>
+
+      <p className="collection-root">{root || t(lang, "collections.rootPending")}</p>
+
+      {notes.length ? (
+        <div className="collection-layout">
+          <div className="collection-list">
+            {notes.slice(0, 6).map((item) => (
+              <button
+                className={note?.id === item.id ? "active" : ""}
+                key={item.id}
+                onClick={() => onOpen(item.id)}
+                type="button"
+              >
+                <strong>{item.title}</strong>
+                <span>{formatDate(item.modifiedAt, lang)} · {formatBytes(item.size)}</span>
+              </button>
+            ))}
+          </div>
+          <article className="collection-preview">
+            {note ? (
+              <>
+                <strong>{note.title}</strong>
+                <p>{note.path}</p>
+                <pre>{note.markdown.slice(0, 1200)}</pre>
+              </>
+            ) : (
+              <p>{t(lang, "collections.select")}</p>
+            )}
+          </article>
+        </div>
+      ) : (
+        <div className="collection-empty">
+          <p>{t(lang, "collections.empty")}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function SkillExplorer({
   catalog,
   filteredTools,
@@ -1320,6 +1465,29 @@ function localizedHealthDetail(check: HealthCheck, lang: Lang) {
     return t(lang, "health.detail.healthUnavailable");
   }
   return check.detail;
+}
+
+function formatDate(value: string, lang: Lang) {
+  try {
+    return new Intl.DateTimeFormat(lang === "es" ? "es-ES" : "en-US", {
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatBytes(value: number) {
+  if (value < 1024) {
+    return `${value} B`;
+  }
+  if (value < 1024 * 1024) {
+    return `${Math.round(value / 1024)} KB`;
+  }
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

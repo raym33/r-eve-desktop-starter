@@ -1,7 +1,8 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdir, readdir, readFile, stat } from "node:fs/promises";
+import { basename, join, resolve } from "node:path";
 
 type HealthState = "ready" | "warning" | "offline" | "info";
 
@@ -13,6 +14,7 @@ type HealthCheck = {
 };
 
 const CHECK_TIMEOUT_MS = 1800;
+const WORKSPACE_FOLDERS = ["Inbox", "Outputs", "Reports", "OCR", "Receipts", "Drafts", "Logs"];
 
 function withTimeout(url: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
@@ -24,6 +26,67 @@ function json(res: import("node:http").ServerResponse, status: number, payload: 
   res.statusCode = status;
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload, null, 2));
+}
+
+function workspaceRoot(env: Record<string, string>) {
+  const configured = env.AI_NATIVE_OS_WORKSPACE || "~/AI-Native-OS";
+  if (configured.startsWith("~/")) {
+    return resolve(process.env.HOME || process.cwd(), configured.slice(2));
+  }
+  return resolve(configured);
+}
+
+async function ensureWorkspace(env: Record<string, string>) {
+  const root = workspaceRoot(env);
+  await mkdir(root, { recursive: true });
+  await Promise.all(WORKSPACE_FOLDERS.map((folder) => mkdir(join(root, folder), { recursive: true })));
+  await mkdir(join(root, "Reports", "Research"), { recursive: true });
+  return root;
+}
+
+async function listResearchNotes(env: Record<string, string>) {
+  const root = await ensureWorkspace(env);
+  const researchDir = join(root, "Reports", "Research");
+  const entries = await readdir(researchDir, { withFileTypes: true });
+  const notes = await Promise.all(
+    entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map(async (entry) => {
+        const path = join(researchDir, entry.name);
+        const info = await stat(path);
+        return {
+          id: entry.name,
+          modifiedAt: info.mtime.toISOString(),
+          path,
+          size: info.size,
+          title: titleFromMarkdown(await readFile(path, "utf8"), entry.name),
+        };
+      }),
+  );
+  return {
+    root,
+    notes: notes.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt)),
+  };
+}
+
+async function readResearchNote(env: Record<string, string>, id: string) {
+  const safeId = basename(id);
+  if (safeId !== id || !safeId.endsWith(".md")) {
+    throw new Error("Invalid research note id.");
+  }
+  const root = await ensureWorkspace(env);
+  const path = join(root, "Reports", "Research", safeId);
+  const markdown = await readFile(path, "utf8");
+  return {
+    id: safeId,
+    markdown,
+    path,
+    title: titleFromMarkdown(markdown, safeId),
+  };
+}
+
+function titleFromMarkdown(markdown: string, fallback: string) {
+  return markdown.match(/^#\s+(.+)$/m)?.[1]?.trim() || fallback.replace(/\.md$/, "");
 }
 
 async function buildHealth(env: Record<string, string>, root: string) {
@@ -177,6 +240,21 @@ export default defineConfig(({ mode }) => {
               json(res, 500, {
                 generatedAt: new Date().toISOString(),
                 checks: [],
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          });
+          server.middlewares.use("/api/research-notes", async (req, res) => {
+            try {
+              const url = new URL(req.url || "/", "http://127.0.0.1");
+              const id = url.searchParams.get("id");
+              if (id) {
+                json(res, 200, await readResearchNote(env, id));
+              } else {
+                json(res, 200, await listResearchNotes(env));
+              }
+            } catch (error) {
+              json(res, 500, {
                 error: error instanceof Error ? error.message : String(error),
               });
             }

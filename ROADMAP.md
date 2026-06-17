@@ -46,7 +46,7 @@ Status: implemented in this starter.
 - `web_research`: search, read top sources, and return cited research material. **Implemented.**
 - First-screen Web Research actions for quick, deep, and site-specific research. **Implemented.**
 - Save research notes as Markdown under the workspace. **Implemented (v1).**
-- Research collections.
+- Research Collections dashboard for saved Markdown notes. **Implemented (v1).**
 - Export to PDF and clipboard-safe text.
 - Better handling for weak fallback search providers.
 

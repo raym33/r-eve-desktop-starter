@@ -90,6 +90,7 @@ h3 {
 .forge-panel,
 .health-panel,
 .pdf-workbench,
+.research-collections,
 .research-workbench,
 .workflow-card,
 .system-strip div,
@@ -229,6 +230,7 @@ h3 {
 .tool-log-header,
 .permission-title,
 .health-header,
+.research-collections-header,
 .pdf-workbench-header,
 .research-workbench-header {
   display: flex;
@@ -700,6 +702,7 @@ h3 {
 }
 
 .pdf-workbench,
+.research-collections,
 .research-workbench {
   display: grid;
   gap: 12px;
@@ -721,6 +724,107 @@ h3 {
 .research-workbench-header p {
   color: #66717b;
   font-size: 13px;
+}
+
+.research-collections-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  border: 1px solid #d0d6dc;
+  border-radius: 8px;
+  background: #f7f9fa;
+  color: #263039;
+  padding: 0 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.research-collections-header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.collection-root {
+  color: #69727c;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.collection-layout {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.42fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.collection-list {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.collection-list button {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #dfe3e7;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #171b20;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.collection-list button.active,
+.collection-list button:hover {
+  border-color: #3e6f64;
+  background: #f1f7f4;
+}
+
+.collection-list strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-list span,
+.collection-empty,
+.collection-preview p {
+  color: #69727c;
+  font-size: 12px;
+  line-height: 1.38;
+}
+
+.collection-preview,
+.collection-empty {
+  min-width: 0;
+  border: 1px solid #dfe3e7;
+  border-radius: 8px;
+  background: #fbfcfd;
+  padding: 11px;
+}
+
+.collection-preview {
+  display: grid;
+  gap: 7px;
+}
+
+.collection-preview pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  border-radius: 8px;
+  background: #f2f4f5;
+  color: #252c33;
+  padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .pdf-action-grid,
@@ -981,6 +1085,7 @@ h3 {
   }
 
   .health-grid,
+  .collection-layout,
   .pdf-action-grid,
   .research-action-grid,
   .workflow-grid {
@@ -1025,6 +1130,7 @@ h3 {
 
   .system-strip,
   .health-grid,
+  .collection-layout,
   .pdf-action-grid,
   .research-action-grid,
   .workflow-grid {
