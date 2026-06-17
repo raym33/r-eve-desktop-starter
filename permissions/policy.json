@@ -1,0 +1,28 @@
+{
+  "$comment": "Single source of truth for AI Native OS permission gating. Loaded by scripts/r_bridge.py (runtime) and agent/lib/guardedTools.ts (import). Edit here, not in those files.",
+  "blocked_skills": [
+    "android",
+    "bluetooth",
+    "clipboard",
+    "docker",
+    "gpio",
+    "power",
+    "realtime_voice",
+    "screenshot",
+    "social",
+    "ssh",
+    "voice",
+    "wifi"
+  ],
+  "guarded_tools": [
+    "email.send_email",
+    "social.social_post",
+    "social.social_dm",
+    "social.social_reply",
+    "http.http_post",
+    "http.http_put",
+    "http.http_delete",
+    "http.http_request",
+    "sql.import_csv_to_db"
+  ]
+}

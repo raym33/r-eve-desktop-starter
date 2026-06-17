@@ -6,6 +6,7 @@ AI Native OS is intentionally small at the top level. The app is split into a UI
 .
   agent/              Eve agent, instructions, channels, and tools
   docs/               Product, Docker, and structure documentation
+  permissions/        policy.json: single source for blocked and guarded tools
   public/             Generated static assets, including the R catalog
   r/                  raym33/r git submodule
   scripts/            Local bridge scripts
@@ -31,6 +32,7 @@ Browser UI
 - Add Eve tools in `agent/tools/`.
 - Add UI modules in `src/`.
 - Add Python bridge commands in `scripts/r_bridge.py`.
+- Change blocked/guarded permissions in `permissions/policy.json` (both the Python bridge and the UI read it; do not edit the lists in code).
 - Generate missing capabilities in `skill-drafts/` through Skill Forge.
 - Update the embedded R engine with `git submodule update --remote r`.
 

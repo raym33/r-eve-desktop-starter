@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_BLOCKED_SKILLS = {
+# Hardcoded fallbacks used only if permissions/policy.json is missing or
+# unreadable, so security never silently degrades to "nothing blocked".
+_FALLBACK_BLOCKED_SKILLS = {
     "android",
     "bluetooth",
     "clipboard",
@@ -28,12 +30,7 @@ DEFAULT_BLOCKED_SKILLS = {
     "voice",
     "wifi",
 }
-
-
-# Outward-facing or irreversible tools: never auto-execute. They require an
-# explicit confirmation step so a non-technical user always previews and
-# approves the action first. Format: "skill.tool".
-DEFAULT_GUARDED_TOOLS = {
+_FALLBACK_GUARDED_TOOLS = {
     "email.send_email",
     "social.social_post",
     "social.social_dm",
@@ -44,6 +41,26 @@ DEFAULT_GUARDED_TOOLS = {
     "http.http_request",
     "sql.import_csv_to_db",
 }
+
+
+def _load_policy() -> dict[str, Any]:
+    # Single source of truth shared with agent/lib/guardedTools.ts.
+    path = Path(__file__).resolve().parent.parent / "permissions" / "policy.json"
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+_POLICY = _load_policy()
+
+# Skill families blocked by default. Outward-facing or irreversible tools instead
+# go through the confirmation gate (DEFAULT_GUARDED_TOOLS) so a non-technical user
+# always previews and approves before they run. Both come from permissions/policy.json.
+DEFAULT_BLOCKED_SKILLS = set(_POLICY.get("blocked_skills") or _FALLBACK_BLOCKED_SKILLS)
+DEFAULT_GUARDED_TOOLS = set(_POLICY.get("guarded_tools") or _FALLBACK_GUARDED_TOOLS)
 
 
 def _json_out(payload: Any) -> None:

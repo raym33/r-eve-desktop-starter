@@ -1,20 +1,11 @@
 // Outward-facing or irreversible R tools that require explicit user approval
-// before they run. This is the UI/agent-side mirror of DEFAULT_GUARDED_TOOLS in
-// scripts/r_bridge.py. Keep the two lists in sync: the bridge enforces the gate
-// for any caller (CLI, tests), while `needsApproval` drives the in-app
-// human-in-the-loop approval prompt. Pure module (no Node APIs) so it can be
-// imported from both the agent runtime and the browser UI.
-export const GUARDED_TOOLS: ReadonlySet<string> = new Set([
-  "email.send_email",
-  "social.social_post",
-  "social.social_dm",
-  "social.social_reply",
-  "http.http_post",
-  "http.http_put",
-  "http.http_delete",
-  "http.http_request",
-  "sql.import_csv_to_db",
-]);
+// before they run. The list comes from the single source of truth in
+// permissions/policy.json (also loaded by scripts/r_bridge.py), so the bridge
+// gate and the in-app `needsApproval` prompt can never drift apart. Pure module
+// (no Node APIs) so it can be imported from both the agent runtime and the UI.
+import policy from "../../permissions/policy.json" with { type: "json" };
+
+export const GUARDED_TOOLS: ReadonlySet<string> = new Set(policy.guarded_tools);
 
 export function isGuardedTool(skill: unknown, tool: unknown): boolean {
   return (
