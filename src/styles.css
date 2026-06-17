@@ -326,6 +326,54 @@ h2 {
   margin-top: auto;
 }
 
+.tool-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tool-log-header div {
+  display: grid;
+  gap: 3px;
+}
+
+.tool-log-header p {
+  color: rgba(248, 243, 234, 0.64);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.tool-log-header svg {
+  color: rgba(168, 216, 191, 0.86);
+}
+
+.tool-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tool-summary span {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(248, 243, 234, 0.78);
+  padding: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tool-events {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
 .tool-event {
   display: grid;
   gap: 4px;
@@ -339,6 +387,21 @@ h2 {
   color: #bfe7d0;
   padding: 3px 8px;
   font-size: 11px;
+}
+
+.tool-event span.running {
+  background: rgba(234, 198, 90, 0.16);
+  color: #f1d681;
+}
+
+.tool-event span.done {
+  background: rgba(168, 216, 191, 0.16);
+  color: #bfe7d0;
+}
+
+.tool-event span.error {
+  background: rgba(238, 118, 103, 0.16);
+  color: #f2aaa0;
 }
 
 .chat-panel {

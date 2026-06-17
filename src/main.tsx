@@ -1,6 +1,7 @@
 import { useEveAgent } from "eve/react";
 import type { EveMessage, EveMessagePart } from "eve/client";
 import {
+  Activity,
   BarChart3,
   Code2,
   FileText,
@@ -109,6 +110,7 @@ function App() {
       ),
     [messages],
   );
+  const toolHistory = useMemo(() => summarizeToolEvents(toolEvents), [toolEvents]);
 
   useEffect(() => {
     let cancelled = false;
@@ -224,14 +226,7 @@ function App() {
 
         <PermissionPanel summary={permissionSummary} />
 
-        <div className="tool-log">
-          <h2>Tools</h2>
-          {toolEvents.length === 0 ? (
-            <p className="muted">Las herramientas apareceran aqui cuando el agente actue.</p>
-          ) : (
-            toolEvents.map(({ id, part }) => <ToolEvent key={id} part={part} />)
-          )}
-        </div>
+        <ToolLog events={toolEvents} history={toolHistory} />
       </section>
 
       <section className="chat-panel" aria-label="Chat">
@@ -342,9 +337,45 @@ function ToolEvent({ part }: { part: Extract<EveMessagePart, { type: "dynamic-to
 
   return (
     <div className="tool-event">
-      <span>{part.state}</span>
+      <span className={stateClassName(part.state)}>{stateLabel(part.state)}</span>
       <strong>{part.toolName}</strong>
       <p>{query}</p>
+    </div>
+  );
+}
+
+function ToolLog({
+  events,
+  history,
+}: {
+  events: Array<{ id: string; part: Extract<EveMessagePart, { type: "dynamic-tool" }> }>;
+  history: ToolHistory;
+}) {
+  return (
+    <div className="tool-log">
+      <div className="tool-log-header">
+        <div>
+          <h2>Historial</h2>
+          <p>{history.total ? `${history.total} ejecuciones en esta sesion` : "Sin ejecuciones"}</p>
+        </div>
+        <Activity size={16} />
+      </div>
+
+      {history.total ? (
+        <div className="tool-summary" aria-label="Resumen de herramientas">
+          <span>{history.finished} terminadas</span>
+          <span>{history.running} en curso</span>
+          <span>{history.distinctTools} tools</span>
+        </div>
+      ) : (
+        <p className="muted">Las herramientas apareceran aqui cuando el agente actue.</p>
+      )}
+
+      {events.length ? (
+        <div className="tool-events">
+          {events.slice(-8).reverse().map(({ id, part }) => <ToolEvent key={id} part={part} />)}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -512,6 +543,13 @@ type PermissionSummary = {
   blockedCount: number;
 };
 
+type ToolHistory = {
+  distinctTools: number;
+  finished: number;
+  running: number;
+  total: number;
+};
+
 function getPermissionSummary(catalog: RCatalog | null): PermissionSummary | null {
   if (!catalog) {
     return null;
@@ -526,6 +564,48 @@ function getPermissionSummary(catalog: RCatalog | null): PermissionSummary | nul
     blocked,
     blockedCount: blocked.length,
   };
+}
+
+function summarizeToolEvents(
+  events: Array<{ id: string; part: Extract<EveMessagePart, { type: "dynamic-tool" }> }>,
+): ToolHistory {
+  const tools = new Set(events.map(({ part }) => part.toolName));
+  const running = events.filter(({ part }) =>
+    ["input-streaming", "input-available"].includes(part.state),
+  ).length;
+  const finished = events.filter(({ part }) =>
+    ["output-available", "output-error"].includes(part.state),
+  ).length;
+
+  return {
+    distinctTools: tools.size,
+    finished,
+    running,
+    total: events.length,
+  };
+}
+
+function stateLabel(state: string) {
+  if (state === "output-available") {
+    return "terminada";
+  }
+  if (state === "output-error") {
+    return "error";
+  }
+  if (state === "input-streaming" || state === "input-available") {
+    return "en curso";
+  }
+  return state;
+}
+
+function stateClassName(state: string) {
+  if (state === "output-error") {
+    return "error";
+  }
+  if (state === "output-available") {
+    return "done";
+  }
+  return "running";
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
