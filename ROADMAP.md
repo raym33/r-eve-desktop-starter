@@ -50,7 +50,7 @@ Status: implemented in this starter.
 ## Phase 4: Permission System
 
 - Confirmation gate (bridge level): outward-facing and irreversible R tools (e.g. `email.send_email`, social posts, HTTP writes) never auto-execute. The bridge returns a `confirmationRequired` preview with a plain-language summary, and the tool runs only when the caller repeats the call with `confirm: true`. The guarded set is additive and cannot be weakened by configuration. **Implemented (v1).**
-- Real human-in-the-loop gating (UI level): the bridge boolean only prevents one-shot execution; it does not prove a human approved. Next step is to intercept the `confirmationRequired` payload in the UI and require an explicit user click (Confirm / Cancel) before the confirmed call is sent.
+- Real human-in-the-loop gating (UI level): guarded R tools are wired through Eve's native `needsApproval`, so the runtime pauses before execution and the UI shows an approval card with a plain-language summary and Approve / Cancel buttons. The model cannot bypass it; the composer is locked until the user responds. **Implemented.**
 - Per-tool permission prompts.
 - Allow once, allow for session, always allow, deny.
 - Workspace folder allowlist.

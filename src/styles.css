@@ -870,3 +870,77 @@ h3 {
     display: none;
   }
 }
+
+.approval-card {
+  margin: 0 22px 12px;
+  border: 1px solid #e6c98a;
+  border-radius: 10px;
+  background: #fff8ed;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(60, 50, 20, 0.06);
+}
+
+.approval-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8a5a12;
+  margin-bottom: 8px;
+}
+
+.approval-head strong {
+  font-size: 14px;
+}
+
+.approval-summary {
+  margin: 0 0 12px;
+  color: #1f2937;
+  line-height: 1.45;
+}
+
+.approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.approval-button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    opacity 120ms ease;
+}
+
+.approval-button.primary {
+  background: #2f9d66;
+  color: #ffffff;
+}
+
+.approval-button.primary:hover {
+  background: #288a59;
+}
+
+.approval-button.danger {
+  background: #ffffff;
+  border-color: #d6a4a0;
+  color: #9c2e25;
+}
+
+.approval-button.danger:hover {
+  background: #fdeceb;
+}
+
+.approval-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.approval-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #8a7a55;
+}

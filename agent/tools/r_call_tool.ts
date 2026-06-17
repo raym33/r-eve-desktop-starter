@@ -1,24 +1,25 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { runRBridge } from "../lib/rBridge.js";
+import { isGuardedTool } from "../lib/guardedTools.js";
 
 export default defineTool({
   description:
-    "Execute one specific tool from the raym33/r project. Use r_search_tools or r_catalog first when the exact schema is unknown. Outward or irreversible tools return a safe preview first; call again with confirm=true only after the user explicitly approves.",
+    "Execute one specific tool from the raym33/r project. Use r_search_tools or r_catalog first when the exact schema is unknown. Outward or irreversible tools (such as sending an email) are gated: the app shows the user an approval prompt and runs the tool only after they approve. Call the tool normally; do not try to bypass the prompt.",
   inputSchema: z.object({
     skill: z.string().describe("R skill name, for example math, json, rss, pdf, git."),
     tool: z.string().describe("Tool name inside that skill."),
     params: z.record(z.string(), z.unknown()).default({}).describe("JSON arguments for the tool."),
-    confirm: z
-      .boolean()
-      .default(false)
-      .describe(
-        "Set to true ONLY after the user has explicitly approved an outward or irreversible action (such as sending an email). Leave false to get a safe preview first.",
-      ),
   }),
-  async execute({ skill, tool, params, confirm }) {
+  // Real human-in-the-loop gate: for outward or irreversible tools, Eve pauses
+  // and asks the user to approve before this tool runs. The model cannot skip it.
+  needsApproval: ({ toolInput }) => isGuardedTool(toolInput?.skill, toolInput?.tool),
+  async execute({ skill, tool, params }) {
     const args = ["call", skill, tool, "--params", JSON.stringify(params)];
-    if (confirm) {
+    // Reaching execute for a guarded tool means the user already approved via the
+    // Eve approval prompt, so confirm the bridge-level gate too (avoids a double
+    // confirmation). The bridge gate still protects non-UI callers.
+    if (isGuardedTool(skill, tool)) {
       args.push("--confirm");
     }
     return runRBridge(args);

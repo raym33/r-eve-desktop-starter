@@ -1,5 +1,6 @@
 import { useEveAgent } from "eve/react";
 import type { EveMessage, EveMessagePart } from "eve/client";
+import { summarizeGuardedAction } from "../agent/lib/guardedTools.js";
 import {
   Activity,
   BarChart3,
@@ -177,6 +178,25 @@ function App() {
     [messages],
   );
   const toolHistory = useMemo(() => summarizeToolEvents(toolEvents), [toolEvents]);
+
+  const pendingApproval = useMemo(() => {
+    // Scan newest-first so the card always reflects the latest pending request.
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      for (const part of messages[i].parts) {
+        if (part.type === "dynamic-tool" && part.state === "approval-requested") {
+          return part;
+        }
+      }
+    }
+    return null;
+  }, [messages]);
+
+  async function respondToApproval(requestId: string, optionId: string) {
+    if (agent.status === "submitted" || agent.status === "streaming") {
+      return;
+    }
+    await agent.send({ inputResponses: [{ requestId, optionId }] });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -411,12 +431,20 @@ function App() {
 
         {agent.error ? <div className="error-box">{String(agent.error.message ?? agent.error)}</div> : null}
 
+        {pendingApproval ? (
+          <ApprovalCard
+            busy={agent.status === "submitted" || agent.status === "streaming"}
+            onRespond={respondToApproval}
+            part={pendingApproval}
+          />
+        ) : null}
+
         <div className="quickbar" aria-label="Quick actions">
           {WORKFLOWS.slice(0, 4).map((workflow) => (
             <button
               className="tooltip-control"
               data-tooltip={workflow.hint}
-              disabled={agent.status !== "ready"}
+              disabled={agent.status !== "ready" || Boolean(pendingApproval)}
               key={workflow.title}
               onClick={() => sendMessage(workflow.prompt)}
               title={workflow.hint}
@@ -431,6 +459,7 @@ function App() {
         <form className="composer" onSubmit={onSubmit}>
           <textarea
             aria-label="Message"
+            disabled={Boolean(pendingApproval)}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
@@ -438,7 +467,11 @@ function App() {
                 event.currentTarget.form?.requestSubmit();
               }
             }}
-            placeholder="Describe a task for Eve..."
+            placeholder={
+              pendingApproval
+                ? "Approve or cancel the pending action above to continue…"
+                : "Describe a task for Eve..."
+            }
             value={input}
           />
           {agent.status === "submitted" || agent.status === "streaming" ? (
@@ -457,7 +490,7 @@ function App() {
               aria-label="Send"
               className="tooltip-control"
               data-tooltip="Send this task to the local agent."
-              disabled={!input.trim()}
+              disabled={!input.trim() || Boolean(pendingApproval)}
               title="Send this task to the local agent."
               type="submit"
             >
@@ -482,6 +515,63 @@ function ChatMessage({ message }: { message: EveMessage }) {
       <div className="message-role">{message.role === "user" ? "You" : "Eve"}</div>
       <div className="message-body">{text}</div>
     </article>
+  );
+}
+
+function ApprovalCard({
+  busy,
+  onRespond,
+  part,
+}: {
+  busy: boolean;
+  onRespond: (requestId: string, optionId: string) => void;
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
+}) {
+  const request = part.toolMetadata?.eve?.inputRequest;
+  if (!request) {
+    return null;
+  }
+
+  const input = (part.input ?? {}) as { skill?: unknown; tool?: unknown; params?: unknown };
+  const summary =
+    typeof input.skill === "string" && typeof input.tool === "string"
+      ? summarizeGuardedAction(
+          input.skill,
+          input.tool,
+          (input.params as Record<string, unknown>) ?? {},
+        )
+      : request.prompt;
+
+  const options =
+    request.options && request.options.length > 0
+      ? request.options
+      : [
+          { id: "approve", label: "Approve", style: "primary" as const },
+          { id: "deny", label: "Cancel", style: "danger" as const },
+        ];
+
+  return (
+    <div className="approval-card" role="alertdialog" aria-label="Action approval">
+      <div className="approval-head">
+        <ShieldAlert size={18} />
+        <strong>Approve before continuing</strong>
+      </div>
+      <p className="approval-summary">{summary}</p>
+      <div className="approval-actions">
+        {options.map((option) => (
+          <button
+            className={`approval-button ${option.style === "danger" ? "danger" : "primary"}`}
+            disabled={busy}
+            key={option.id}
+            onClick={() => onRespond(request.requestId, option.id)}
+            type="button"
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <p className="approval-note">Nothing runs until you choose.</p>
+    </div>
   );
 }
 
