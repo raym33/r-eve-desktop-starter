@@ -31,6 +31,7 @@ The UI is bilingual (Spanish / English) with a language toggle.
 - Spanish legal research via the local Lexia RAG service (`lexia_*` tools) and BOE lookup (`boe_query`).
 - Guided PDF workbench for OCR, summaries, merging, page extraction, repair, and report generation.
 - Skill Forge with a reviewed draft → approve → install pipeline (nothing is installed or executed automatically).
+- Experimental secure communication connectors for Gmail/Microsoft 365 drafts and WhatsApp Business Cloud API workflows.
 - Permission panel that shows ready and blocked skill families.
 - Session tool history for auditability.
 - Setup status checks for LM Studio, the selected model, the R catalog, the R bridge, Lexia, search, and workspace mode.
@@ -124,6 +125,20 @@ GET /api/research-notes?id=<filename.md>
 ```
 
 For serious answers, AI Native OS should read sources before answering instead of relying on snippets alone.
+
+## Experimental Email And WhatsApp
+
+AI Native OS includes opt-in experimental connectors for everyday communication workflows:
+
+- email status checks;
+- read-only email metadata/snippet listing;
+- guarded Gmail or Microsoft 365 draft creation;
+- local WhatsApp reply drafts;
+- guarded WhatsApp Business Cloud API sending, disabled by default.
+
+These connectors are not enabled unless credentials are provided in `.env`. Email sending is intentionally not implemented; the system can create drafts only. WhatsApp uses the official Business Cloud API, not WhatsApp Web scraping.
+
+See [Experimental Connectors](docs/EXPERIMENTAL_CONNECTORS.md).
 
 ## Run
 
@@ -249,4 +264,5 @@ Generated Skill Forge skills are never installed or executed automatically — t
 - [Product MVP](docs/R_DESKTOP_MVP.md)
 - [Project Structure](docs/STRUCTURE.md)
 - [Docker](docs/DOCKER.md)
+- [Experimental Connectors](docs/EXPERIMENTAL_CONNECTORS.md)
 - [Roadmap](ROADMAP.md)

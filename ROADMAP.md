@@ -60,6 +60,18 @@ Status: implemented in this starter.
 - Sensitive action preview before execution.
 - Audit log and replay controls.
 
+## Phase 4.5: Experimental Communication Connectors
+
+- Secure email status check for Gmail and Microsoft 365 OAuth credentials. **Implemented (experimental).**
+- Read-only email listing with message metadata and snippets. **Implemented (experimental).**
+- Guarded email draft creation; drafts are created only after Eve approval and are never sent automatically. **Implemented (experimental).**
+- WhatsApp Business Cloud API status check. **Implemented (experimental).**
+- Local WhatsApp reply drafts saved under the workspace. **Implemented (experimental).**
+- Guarded WhatsApp Cloud API sending, disabled unless `WHATSAPP_EXPERIMENTAL_SEND=1` is set. **Implemented (experimental).**
+- OAuth setup UI and token vault.
+- Incoming WhatsApp webhook receiver and conversation inbox.
+- Per-contact allowlists and communication audit timeline.
+
 ## Phase 5: Power User Surface
 
 - Browser-use for interactive browser tasks.

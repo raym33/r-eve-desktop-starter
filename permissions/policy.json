@@ -16,6 +16,8 @@
   ],
   "guarded_tools": [
     "email.send_email",
+    "experimental_email_create_draft",
+    "experimental_whatsapp_send_message",
     "social.social_post",
     "social.social_dm",
     "social.social_reply",

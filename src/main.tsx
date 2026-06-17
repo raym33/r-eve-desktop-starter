@@ -1,6 +1,6 @@
 import { useEveAgent } from "eve/react";
 import type { EveMessage, EveMessagePart } from "eve/client";
-import { summarizeGuardedAction } from "../agent/lib/guardedTools.js";
+import { summarizeGuardedAction, summarizeNativeApprovalAction } from "../agent/lib/guardedTools.js";
 import {
   Activity,
   BarChart3,
@@ -8,6 +8,7 @@ import {
   FileText,
   FolderKanban,
   Globe2,
+  Mail,
   RotateCcw,
   Send,
   ShieldAlert,
@@ -170,6 +171,23 @@ const WORKFLOWS: Array<{ icon: LucideIcon } & LocalizedEntry> = [
       hint: "Usa herramientas locales para inspeccionar y mejorar proyectos de codigo.",
       prompt:
         "Encuentra habilidades R para flujos de trabajo de codigo y git. Resume como podrian ayudar con un proyecto local.",
+    },
+  },
+  {
+    icon: Mail,
+    en: {
+      title: "Communication",
+      description: "Email drafts and WhatsApp reply drafts with approval gates.",
+      hint: "Check experimental connectors before reading or creating drafts.",
+      prompt:
+        "Check the experimental email and WhatsApp connector status. If email is configured, explain what can be read or drafted safely. If WhatsApp is configured, explain the local draft flow. Do not send anything.",
+    },
+    es: {
+      title: "Comunicacion",
+      description: "Borradores de email y WhatsApp con aprobacion humana.",
+      hint: "Comprueba los conectores experimentales antes de leer o crear borradores.",
+      prompt:
+        "Comprueba el estado de los conectores experimentales de email y WhatsApp. Si email esta configurado, explica que se puede leer o preparar con seguridad. Si WhatsApp esta configurado, explica el flujo de borradores locales. No envies nada.",
     },
   },
   {
@@ -926,7 +944,8 @@ function ApprovalCard({
           (input.params as Record<string, unknown>) ?? {},
           lang,
         )
-      : request.prompt;
+      : summarizeNativeApprovalAction(part.toolName, (part.input as Record<string, unknown>) ?? {}, lang) ??
+        request.prompt;
 
   const options =
     request.options && request.options.length > 0

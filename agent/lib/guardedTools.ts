@@ -56,3 +56,31 @@ export function summarizeGuardedAction(
   }
   return `Run ${skill}.${tool} with the provided details.`;
 }
+
+export function summarizeNativeApprovalAction(
+  toolName: string,
+  params: Record<string, unknown>,
+  lang: "es" | "en" = "en",
+): string | null {
+  if (toolName === "experimental_email_create_draft") {
+    const to = Array.isArray(params.to) ? params.to.join(", ") : String(params.to ?? "");
+    const subject = String(params.subject ?? (lang === "es" ? "(sin asunto)" : "(no subject)"));
+    const body = typeof params.bodyText === "string" ? params.bodyText : "";
+    const preview = body.replace(/\s+/g, " ").trim().slice(0, 220);
+    return lang === "es"
+      ? `Crear un borrador de email para ${to} con asunto "${subject}". No se enviara. Vista previa: "${preview}"`
+      : `Create an email draft for ${to} with subject "${subject}". It will not be sent. Preview: "${preview}"`;
+  }
+
+  if (toolName === "experimental_whatsapp_send_message") {
+    const phone = String(params.phoneNumber ?? "");
+    const label = params.contactLabel ? ` (${String(params.contactLabel)})` : "";
+    const body = typeof params.bodyText === "string" ? params.bodyText : "";
+    const preview = body.replace(/\s+/g, " ").trim().slice(0, 220);
+    return lang === "es"
+      ? `Enviar un mensaje de WhatsApp a ${phone}${label}. Vista previa: "${preview}"`
+      : `Send a WhatsApp message to ${phone}${label}. Preview: "${preview}"`;
+  }
+
+  return null;
+}
