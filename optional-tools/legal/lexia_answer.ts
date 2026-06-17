@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { lexiaAnswer } from "../../agent/lib/lexia.js";
+import { lexiaAnswer } from "#lib/lexia.js";
 
 export default defineTool({
   description:

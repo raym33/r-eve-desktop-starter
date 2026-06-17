@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { createEmailDraft } from "../../agent/lib/experimentalConnectors.js";
+import { createEmailDraft } from "#lib/experimentalConnectors.js";
 
 const DraftInput = z.object({
   bodyText: z.string().min(1).describe("Plain-text body for the email draft."),

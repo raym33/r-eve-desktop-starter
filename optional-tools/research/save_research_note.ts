@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { writeNewWorkspaceFile } from "../../agent/lib/workspace.js";
+import { writeNewWorkspaceFile } from "#lib/workspace.js";
 
 const Source = z.object({
   note: z.string().optional(),

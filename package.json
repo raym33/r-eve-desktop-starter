@@ -5,7 +5,8 @@
   "type": "module",
   "imports": {
     "#*": "./agent/*",
-    "#evals/*": "./evals/*"
+    "#evals/*": "./evals/*",
+    "#tools/*": "./agent/tools/*"
   },
   "scripts": {
     "build": "eve build",
@@ -22,6 +23,7 @@
     "r:catalog": ".venv/bin/python scripts/r_bridge.py export-catalog --output public/r-catalog.json",
     "setup:home": "git submodule update --init --recursive && npm install && npm run r:install && .venv/bin/pip install pytest && npm run r:catalog",
     "start": "eve start",
+    "start:docker": "eve start --host 0.0.0.0 --port ${EVE_PORT:-4274}",
     "start:local": "eve start --host 127.0.0.1 --port ${EVE_PORT:-4274}",
     "test:python": ".venv/bin/python -m pytest scripts/test_confirmation_gate.py scripts/test_workspace.py",
     "typecheck": "tsgo"

@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { markdownToPlainText, plainTextPdf } from "../../agent/lib/simplePdf.js";
-import { readResearchMarkdown, writeNewWorkspaceBuffer, writeNewWorkspaceFile } from "../../agent/lib/workspace.js";
+import { markdownToPlainText, plainTextPdf } from "#lib/simplePdf.js";
+import { readResearchMarkdown, writeNewWorkspaceBuffer, writeNewWorkspaceFile } from "#lib/workspace.js";
 
 export default defineTool({
   description:

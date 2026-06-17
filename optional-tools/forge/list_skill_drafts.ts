@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { runRBridge } from "../../agent/lib/rBridge.js";
+import { runRBridge } from "#lib/rBridge.js";
 
 export default defineTool({
   description: "List Skill Forge draft packages and their implementation, approval, and install status.",

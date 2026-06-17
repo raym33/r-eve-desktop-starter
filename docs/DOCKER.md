@@ -74,4 +74,6 @@ npm run start:local
 npm run web:local
 ```
 
+Inside Docker, the image uses `npm run start:docker` so Eve binds to `0.0.0.0` and the published `4274` port is reachable from the host.
+
 Use Docker mode when you want stronger dependency isolation or a cleaner demo environment.

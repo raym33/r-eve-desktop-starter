@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { lexiaDraft } from "../../agent/lib/lexia.js";
+import { lexiaDraft } from "#lib/lexia.js";
 
 export default defineTool({
   description:

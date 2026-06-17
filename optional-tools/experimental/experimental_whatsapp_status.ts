@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { whatsappStatus } from "../../agent/lib/experimentalConnectors.js";
+import { whatsappStatus } from "#lib/experimentalConnectors.js";
 
 export default defineTool({
   description:

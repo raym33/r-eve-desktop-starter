@@ -31,4 +31,4 @@ RUN python3 -m venv .venv \
 
 EXPOSE 4274 5173
 
-CMD ["sh", "-lc", "npm run start:local & npm run web:docker"]
+CMD ["sh", "-lc", "npm run start:docker & npm run web:docker"]
