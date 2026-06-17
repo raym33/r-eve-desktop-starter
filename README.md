@@ -15,6 +15,7 @@ The goal is to feel less like a generic chat app and more like a small operating
 - Permission panel that shows ready and blocked skill families.
 - Session tool history for auditability.
 - Minimal responsive UI with button tooltips.
+- Optional Docker runtime for isolating Node, Eve, Python, and R dependencies.
 
 ## Requirements
 
@@ -104,6 +105,26 @@ If Eve is not running at `http://127.0.0.1:3000`, change `VITE_EVE_TARGET` in `.
 
 `npm run dev` opens Eve's interactive development mode. For a predictable local LM Studio start, `build` plus `start` is usually simpler.
 
+## Run With Docker
+
+Docker keeps the workbench runtime isolated while LM Studio stays on the host.
+
+```bash
+cp .env.docker.example .env
+npm run docker:build
+npm run docker:up
+```
+
+If you already have a local `.env`, merge the `DOCKER_` values from `.env.docker.example` instead of replacing it.
+
+Open:
+
+```text
+http://127.0.0.1:5173
+```
+
+See [Docker](docs/DOCKER.md) for the security profile and host networking notes.
+
 ## R Skills
 
 This starter includes a bridge to `raym33/r`:
@@ -176,4 +197,6 @@ For daily use, keep this disabled and let Eve propose a plan before actions that
 ## Documentation
 
 - [Product MVP](docs/R_DESKTOP_MVP.md)
+- [Project Structure](docs/STRUCTURE.md)
+- [Docker](docs/DOCKER.md)
 - [Roadmap](ROADMAP.md)

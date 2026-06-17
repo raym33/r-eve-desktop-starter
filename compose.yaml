@@ -1,0 +1,31 @@
+services:
+  r-workbench:
+    build:
+      context: .
+    image: r-workbench:local
+    init: true
+    ports:
+      - "5173:5173"
+      - "3000:3000"
+    environment:
+      LM_STUDIO_BASE_URL: ${DOCKER_LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      LM_STUDIO_MODEL: ${LM_STUDIO_MODEL:-local-model}
+      LM_STUDIO_API_KEY: ${LM_STUDIO_API_KEY:-lm-studio}
+      LM_STUDIO_CONTEXT_TOKENS: ${LM_STUDIO_CONTEXT_TOKENS:-65536}
+      LM_STUDIO_MAX_OUTPUT_TOKENS: ${LM_STUDIO_MAX_OUTPUT_TOKENS:-4096}
+      VITE_EVE_TARGET: http://127.0.0.1:3000
+      R_BRIDGE_PYTHON: /app/.venv/bin/python
+      R_BRIDGE_SCRIPT: /app/scripts/r_bridge.py
+      R_BRIDGE_ALLOW_DANGEROUS: ${R_BRIDGE_ALLOW_DANGEROUS:-0}
+      R_BRIDGE_BLOCKED_SKILLS: ${R_BRIDGE_BLOCKED_SKILLS:-android,bluetooth,clipboard,docker,email,gpio,power,realtime_voice,screenshot,social,ssh,voice,wifi}
+      SEARXNG_URL: ${DOCKER_SEARXNG_URL:-}
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./skill-drafts:/app/skill-drafts
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

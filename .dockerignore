@@ -1,0 +1,15 @@
+.git
+.eve
+.output
+.venv
+.workflow-data
+dist
+node_modules
+skill-drafts/*
+!skill-drafts/README.md
+.env
+.DS_Store
+*.tsbuildinfo
+__pycache__
+*.pyc
+r/.git
