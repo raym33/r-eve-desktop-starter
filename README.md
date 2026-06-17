@@ -114,6 +114,7 @@ Research tools:
 - `fetch_page`: reads one URL and returns clean Markdown.
 - `web_research`: searches, reads the best sources, and returns cited research material.
 - `save_research_note`: saves a source-backed Markdown note under `~/AI-Native-OS/Reports/Research`.
+- `export_research_note`: exports a saved note to PDF and/or clipboard-safe plain text under `~/AI-Native-OS/Reports/Research/Exports`.
 
 The dashboard also includes Research Collections, a local view over saved Markdown notes in the workspace. The local web server exposes read-only endpoints for that folder:
 

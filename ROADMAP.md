@@ -47,7 +47,7 @@ Status: implemented in this starter.
 - First-screen Web Research actions for quick, deep, and site-specific research. **Implemented.**
 - Save research notes as Markdown under the workspace. **Implemented (v1).**
 - Research Collections dashboard for saved Markdown notes. **Implemented (v1).**
-- Export to PDF and clipboard-safe text.
+- Export to PDF and clipboard-safe text. **Implemented (v1).**
 - Better handling for weak fallback search providers.
 
 ## Phase 4: Permission System

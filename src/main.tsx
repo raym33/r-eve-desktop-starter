@@ -738,6 +738,7 @@ function App() {
                 loading={researchNotesLoading}
                 note={selectedResearchNote}
                 notes={researchNotes?.notes ?? []}
+                onExport={(id, formats) => sendMessage(buildResearchExportPrompt(id, formats, lang))}
                 onOpen={openResearchNote}
                 onRefresh={refreshResearchNotes}
                 root={researchNotes?.root ?? ""}
@@ -1081,6 +1082,7 @@ function ResearchCollections({
   loading,
   note,
   notes,
+  onExport,
   onOpen,
   onRefresh,
   root,
@@ -1089,6 +1091,7 @@ function ResearchCollections({
   loading: boolean;
   note: ResearchNoteContent | null;
   notes: ResearchNote[];
+  onExport: (id: string, formats: Array<"pdf" | "txt">) => void;
   onOpen: (id: string) => void;
   onRefresh: () => void;
   root: string;
@@ -1135,6 +1138,17 @@ function ResearchCollections({
               <>
                 <strong>{note.title}</strong>
                 <p>{note.path}</p>
+                <div className="collection-export-actions">
+                  <button onClick={() => onExport(note.id, ["txt"])} type="button">
+                    {t(lang, "collections.exportText")}
+                  </button>
+                  <button onClick={() => onExport(note.id, ["pdf"])} type="button">
+                    {t(lang, "collections.exportPdf")}
+                  </button>
+                  <button onClick={() => onExport(note.id, ["txt", "pdf"])} type="button">
+                    {t(lang, "collections.exportBoth")}
+                  </button>
+                </div>
                 <pre>{note.markdown.slice(0, 1200)}</pre>
               </>
             ) : (
@@ -1303,6 +1317,23 @@ function buildToolPrompt(skill: string, tool: RTool, lang: Lang) {
     `Description: ${tool.description}`,
     `Expected parameters: ${JSON.stringify(tool.parameters ?? {}, null, 2)}`,
     `First explain which inputs you need. If all inputs are already available, call r_call_tool with those parameters.`,
+  ].join("\n");
+}
+
+function buildResearchExportPrompt(id: string, formats: Array<"pdf" | "txt">, lang: Lang) {
+  if (lang === "es") {
+    return [
+      "Exporta esta nota de investigacion guardada.",
+      `Archivo: ${id}`,
+      `Formatos: ${formats.join(", ")}`,
+      "Usa export_research_note y dime las rutas de salida.",
+    ].join("\n");
+  }
+  return [
+    "Export this saved research note.",
+    `File: ${id}`,
+    `Formats: ${formats.join(", ")}`,
+    "Use export_research_note and tell me the output paths.",
   ].join("\n");
 }
 

@@ -813,6 +813,29 @@ h3 {
   gap: 7px;
 }
 
+.collection-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.collection-export-actions button {
+  min-height: 28px;
+  border: 1px solid #cdd6d1;
+  border-radius: 8px;
+  background: #f5f8f6;
+  color: #173d34;
+  padding: 0 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.collection-export-actions button:hover {
+  border-color: #3e6f64;
+  background: #e9f3ef;
+}
+
 .collection-preview pre {
   max-height: 220px;
   overflow: auto;
