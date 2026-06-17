@@ -1,72 +1,79 @@
 # R Desktop MVP
 
-Objetivo: convertir `raym33/r` en una app local para personas con ordenadores personales medios/altos, usando modelos locales y permisos claros.
+Objective: turn `raym33/r` into a local-first desktop workbench for people with medium to high-end personal computers, local models, and explicit permissions.
 
-## Posicionamiento
+## Positioning
 
-R no debe sentirse como otro chat. Debe sentirse como una mesa de trabajo local:
+R Workbench should not feel like another chat window. It should feel like a local operating surface:
 
-- entiende archivos y documentos del usuario;
-- busca y lee web con fuentes;
-- usa herramientas locales bajo demanda;
-- pide permiso antes de tocar acciones sensibles;
-- funciona con LM Studio, Ollama o cualquier endpoint OpenAI-compatible.
+- understands user files and documents;
+- searches and reads the web with sources;
+- uses local tools on demand;
+- asks for clear permission before sensitive actions;
+- works with LM Studio, Ollama, or any OpenAI-compatible endpoint.
 
-## Primeros workflows
+## First Workflows
 
-1. Documentos: resumir PDFs, extraer texto, unir/dividir PDFs, generar informes.
-2. Investigación web: buscar, leer fuentes, comparar y crear síntesis con enlaces.
-3. Archivos locales: ordenar carpetas, detectar duplicados, renombrar y convertir.
-4. Datos: CSV, JSON, YAML, SQL ligero y estadísticas.
-5. Código: revisar repos, explicar errores, usar git y generar parches.
+1. Documents: summarize PDFs, extract text, merge/split PDFs, and generate reports.
+2. Web research: search, read sources, compare, and create linked summaries.
+3. Local files: organize folders, detect duplicates, rename, and convert.
+4. Data: CSV, JSON, YAML, lightweight SQL, and small statistics.
+5. Code: inspect repositories, explain errors, use git, and generate patches.
 
-## Vertical PDF
+## PDF Vertical
 
-Primer vertical de producto para usuarios no tecnicos:
+The first product vertical is document automation for non-technical users:
 
-- Resumir PDF: `ocr.extract_text_from_pdf` como punto de entrada porque cubre texto y escaneados.
-- OCR buscable: `ocr.ocr_to_searchable_pdf`.
-- Unir PDFs: `pdftools.pdf_merge`.
-- Extraer paginas: `pdftools.pdf_extract`.
-- Generar informe: `pdf.generate_pdf` o `pdf.markdown_to_pdf`.
-- Arreglar documentos: `pdftools.pdf_rotate` y `pdftools.pdf_compress`.
+- Summarize PDF: `ocr.extract_text_from_pdf` because it covers extractable and scanned documents.
+- Searchable OCR: `ocr.ocr_to_searchable_pdf`.
+- Merge PDFs: `pdftools.pdf_merge`.
+- Extract pages: `pdftools.pdf_extract`.
+- Generate report: `pdf.generate_pdf` or `pdf.markdown_to_pdf`.
+- Repair documents: `pdftools.pdf_rotate` and `pdftools.pdf_compress`.
 
-Reglas UX: pedir rutas antes de ejecutar, no sobrescribir originales, crear salidas nuevas y enseñar la tool exacta que se va a usar.
+UX rules: ask for paths before execution, never overwrite originals by default, create new output files, and show the exact tool before running it.
 
-## Arquitectura recomendada
+## Recommended Architecture
 
-- UI local: experiencia principal para usuarios no técnicos.
-- Agent runtime: Eve o una capa equivalente con sesiones, streaming y tools.
-- Skill router: no cargar 560 tools al modelo; buscar herramientas relevantes y ejecutar una concreta.
-- Permission layer: bloquear por defecto herramientas sensibles y pedir aprobación visual.
-- Model adapters: LM Studio, Ollama, OpenAI-compatible, APIs externas opcionales.
+- Local UI: primary experience for non-technical users.
+- Agent runtime: Eve or an equivalent layer with sessions, streaming, and tools.
+- Skill router: never load all tools into the model; search relevant tools and execute one exact tool.
+- Permission layer: block sensitive capabilities by default and surface permission state visually.
+- Model adapters: LM Studio, Ollama, OpenAI-compatible endpoints, and optional external APIs.
 
-## Seguridad por defecto
+## Default Safety
 
-Bloquear inicialmente:
+Block initially:
 
-- shell destructiva;
-- red arbitraria;
-- email/envíos;
-- docker/ssh;
-- power/wifi/bluetooth;
-- clipboard;
-- escritura fuera de carpetas permitidas.
+- destructive shell operations;
+- arbitrary network side effects;
+- email and outbound messaging;
+- Docker and SSH;
+- power, Wi-Fi, and Bluetooth controls;
+- clipboard access;
+- writes outside allowed folders.
 
-Permisos ideales:
+Ideal permissions:
 
-- permitir una vez;
-- permitir para esta sesión;
-- permitir siempre para este agente;
-- denegar.
+- allow once;
+- allow for this session;
+- always allow for this agent;
+- deny.
 
-## Siguiente sprint
+## Completed In This Starter
 
-1. Panel de workflows con prompts guiados. Hecho en este starter.
-2. Explorador visual de skills y tools. Hecho en este starter con `public/r-catalog.json`.
-3. Perfil visible de permisos y skills bloqueadas. Hecho en este starter.
-4. Historial visible de ejecuciones por sesion. Hecho en este starter.
-5. Vertical PDF con acciones guiadas. Hecho en este starter.
-6. Resultados persistentes, favoritos y exportacion.
-7. Firecrawl como búsqueda/extracción web principal.
-8. Browser-use como herramienta avanzada para navegación interactiva.
+1. Guided workflow panel.
+2. Visual R skill and tool explorer backed by `public/r-catalog.json`.
+3. Visible permission profile and blocked skill families.
+4. Session tool execution history.
+5. Guided PDF workbench.
+6. Minimal responsive English UI with button tooltips.
+
+## Next Product Steps
+
+1. Persistent results, favorites, and exports.
+2. Firecrawl as the primary web extraction path.
+3. Browser-use as an advanced interactive browsing tool.
+4. Per-agent permission profiles.
+5. File picker and scoped workspace folders.
+6. Local run receipts for audit and replay.

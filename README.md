@@ -1,35 +1,56 @@
-# Eve + LM Studio + Web Search Starter
+# R Workbench
 
-Starter local para usar Eve con LM Studio y busquedas web desde una web app.
+A local-first AI workbench for LM Studio, Eve, web search, and the `raym33/r` skill catalog.
 
-## 1. Configura LM Studio
+The goal is to feel less like a generic chat app and more like a small operating system for personal automation: clear status, visible tools, safe defaults, and task-first controls.
 
-1. Abre LM Studio.
-2. Carga un modelo con buen tool calling.
-3. Arranca el servidor local OpenAI-compatible.
-4. Comprueba que responde:
+## Features
+
+- Local model routing through LM Studio's OpenAI-compatible server.
+- Eve agent runtime with streaming and tool calls.
+- Web search through SearXNG, Brave, Tavily, or DuckDuckGo Instant Answer fallback.
+- `raym33/r` bridge with catalog search and targeted tool execution.
+- Guided PDF workbench for OCR, summaries, merging, page extraction, repair, and report generation.
+- Permission panel that shows ready and blocked skill families.
+- Session tool history for auditability.
+- Minimal responsive UI with button tooltips.
+
+## Requirements
+
+- Node.js and npm.
+- LM Studio with the local server enabled.
+- A local model with reliable tool calling.
+- Python virtual environment created by the setup flow.
+- Optional: SearXNG, Brave Search API key, or Tavily API key for stronger web search.
+
+## Configure LM Studio
+
+1. Open LM Studio.
+2. Load a model with good tool-calling behavior.
+3. Start the local OpenAI-compatible server.
+4. Confirm that it responds:
 
 ```bash
 curl http://127.0.0.1:1234/v1/models
 ```
 
-Copia el `id` del modelo en `.env`.
+Copy the model `id` into `.env`.
 
-## 2. Configura el proyecto
+## Configure The App
 
 ```bash
 cp .env.example .env
 ```
 
-Edita:
+Edit:
 
 ```bash
-LM_STUDIO_MODEL=el-id-real-del-modelo
+LM_STUDIO_MODEL=your-local-model-id
 LM_STUDIO_CONTEXT_TOKENS=65536
 LM_STUDIO_MAX_OUTPUT_TOKENS=4096
 ```
 
-Para busqueda web, configura una de estas opciones:
+For web search, configure one provider:
 
 ```bash
 SEARXNG_URL=http://127.0.0.1:8080
@@ -37,9 +58,9 @@ BRAVE_SEARCH_API_KEY=...
 TAVILY_API_KEY=...
 ```
 
-Si no configuras ninguna, se usa DuckDuckGo Instant Answer como fallback. Sirve para humo, pero no sustituye una busqueda web completa.
+If no provider is configured, the app uses DuckDuckGo Instant Answer as a lightweight fallback. That is useful for smoke tests, but it is not a full web search replacement.
 
-## 3. Arranca Eve y la web
+## Run
 
 Terminal 1:
 
@@ -54,42 +75,29 @@ Terminal 2:
 npm run web
 ```
 
-Abre:
+Open:
 
 ```text
 http://127.0.0.1:5173
 ```
 
-Si Eve no corre en `http://127.0.0.1:3000`, cambia `VITE_EVE_TARGET` en `.env`.
+If Eve is not running at `http://127.0.0.1:3000`, change `VITE_EVE_TARGET` in `.env`.
 
-`npm run dev` abre el modo interactivo de Eve. Para empezar rapido con LM Studio local, el flujo `build` + `start` suele ser mas predecible.
+`npm run dev` opens Eve's interactive development mode. For a predictable local LM Studio start, `build` plus `start` is usually simpler.
 
-## raym33/r skills
+## R Skills
 
-Este starter incluye un puente a `raym33/r`:
+This starter includes a bridge to `raym33/r`:
 
-- `r_catalog`: lista las skills disponibles.
-- `r_search_tools`: busca tools por palabra clave.
-- `r_call_tool`: ejecuta una tool concreta.
+- `r_catalog`: lists available skills.
+- `r_search_tools`: searches tools by keyword.
+- `r_call_tool`: executes one specific tool.
 
-El repo esta clonado en `../work/raym33-r` y se instalo en editable dentro de `.venv`.
-La UI carga `public/r-catalog.json` para mostrar un explorador visual de skills/tools.
-Tambien muestra un panel de permisos con las skills listas para usar y las familias sensibles bloqueadas.
+The R repository is cloned at `../work/raym33-r` and installed editable inside `.venv`.
 
-## Workbench PDF
+The UI loads `public/r-catalog.json` to display a visual skill and tool explorer. It also shows a permission panel with ready skills and sensitive blocked families.
 
-La pantalla inicial incluye un vertical de documentos con acciones guiadas:
-
-- resumir PDFs con extraccion de texto u OCR;
-- convertir escaneados en PDFs buscables;
-- unir varios PDFs;
-- extraer paginas o rangos;
-- generar informes PDF desde texto o Markdown;
-- rotar o comprimir documentos.
-
-Cada accion pide rutas y opciones antes de ejecutar `r_call_tool`. El flujo recomendado es crear siempre un archivo de salida nuevo y conservar los originales.
-
-Prueba rapida:
+Quick check:
 
 ```bash
 .venv/bin/python scripts/r_bridge.py export-catalog --output public/r-catalog.json
@@ -97,10 +105,32 @@ Prueba rapida:
 .venv/bin/python scripts/r_bridge.py call math calculate --params '{"expression":"sqrt(144)"}'
 ```
 
-Por seguridad, el puente bloquea por defecto skills con efectos sensibles como `ssh`, `docker`, `email`, `power`, `wifi`, `clipboard` y similares. Para abrirlas:
+## PDF Workbench
+
+The first screen includes guided document actions:
+
+- summarize PDFs with text extraction or OCR;
+- convert scanned PDFs into searchable PDFs;
+- merge multiple PDFs;
+- extract pages or ranges;
+- generate PDF reports from text or Markdown;
+- rotate or compress documents.
+
+Each action asks for paths and options before running `r_call_tool`. The recommended workflow is to create a new output file and preserve originals.
+
+## Safety
+
+The bridge blocks sensitive skill families by default, including `ssh`, `docker`, `email`, `power`, `wifi`, `clipboard`, and similar capabilities.
+
+To unlock them for the backend process:
 
 ```bash
 R_BRIDGE_ALLOW_DANGEROUS=1 npm run start
 ```
 
-Ese desbloqueo es global para el proceso del backend. Para uso diario, mantenlo desactivado y deja que Eve proponga un plan antes de ejecutar acciones que puedan modificar el sistema.
+For daily use, keep this disabled and let Eve propose a plan before actions that can modify the system.
+
+## Documentation
+
+- [Product MVP](docs/R_DESKTOP_MVP.md)
+- [Roadmap](ROADMAP.md)

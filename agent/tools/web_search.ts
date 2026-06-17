@@ -18,10 +18,10 @@ type SearchResult = z.infer<typeof SearchResult>;
 
 export default defineTool({
   description:
-    "Busca informacion actual en la web. Usala cuando el usuario pida noticias, datos recientes, enlaces, precios, documentacion actual o cualquier cosa que pueda haber cambiado.",
+    "Search the current web. Use it for news, recent facts, links, prices, current documentation, or anything that may have changed.",
   inputSchema: z.object({
-    query: z.string().min(2).describe("Consulta de busqueda web."),
-    maxResults: z.number().int().min(1).max(8).default(5).describe("Numero maximo de resultados."),
+    query: z.string().min(2).describe("Web search query."),
+    maxResults: z.number().int().min(1).max(8).default(5).describe("Maximum number of results."),
   }),
   outputSchema: SearchOutput,
   async execute({ query, maxResults }) {
@@ -62,7 +62,7 @@ async function searchSearxng(query: string, maxResults: number): Promise<SearchR
   const url = new URL(`${baseUrl}/search`);
   url.searchParams.set("q", query);
   url.searchParams.set("format", "json");
-  url.searchParams.set("language", "es-ES");
+  url.searchParams.set("language", "en-US");
 
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
@@ -90,7 +90,7 @@ async function searchBrave(query: string, maxResults: number): Promise<SearchRes
   const url = new URL("https://api.search.brave.com/res/v1/web/search");
   url.searchParams.set("q", query);
   url.searchParams.set("count", String(maxResults));
-  url.searchParams.set("search_lang", "es");
+  url.searchParams.set("search_lang", "en");
 
   const response = await fetch(url, {
     headers: {

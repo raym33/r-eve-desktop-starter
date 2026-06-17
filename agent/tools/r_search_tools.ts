@@ -4,7 +4,7 @@ import { runRBridge } from "../lib/rBridge.js";
 
 export default defineTool({
   description:
-    "Busca tools dentro del catalogo raym33/r por palabra clave. Usala antes de r_call_tool cuando no sepas el nombre exacto de skill/tool.",
+    "Search tools inside the raym33/r catalog by keyword. Use this before r_call_tool when the exact skill or tool name is unknown.",
   inputSchema: z.object({
     query: z.string().min(2),
     limit: z.number().int().min(1).max(50).default(20),

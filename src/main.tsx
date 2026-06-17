@@ -43,97 +43,109 @@ type RCatalog = {
 const WORKFLOWS = [
   {
     icon: FileText,
-    title: "Documentos",
-    description: "PDFs, Markdown, OCR, resúmenes e informes.",
+    title: "Documents",
+    description: "PDFs, Markdown, OCR, summaries, and reports.",
+    hint: "Find the right local R tools for document work.",
     prompt:
-      "Busca en las skills de R las mejores herramientas para trabajar con documentos PDF. Resume las opciones en 5 puntos y dime cuál usarías para resumir una carpeta de PDFs.",
+      "Find the best local R skills for PDF and document work. Summarize the best options in 5 concise points and recommend the safest workflow for summarizing a folder of PDFs.",
   },
   {
     icon: Globe2,
-    title: "Investigación web",
-    description: "Noticias, páginas, fuentes y síntesis.",
+    title: "Web research",
+    description: "Search, read sources, compare, and summarize.",
+    hint: "Search the web and return source-backed notes.",
     prompt:
-      "Haz una investigación web breve sobre las novedades recientes de LM Studio. Usa búsqueda web, lee fuentes relevantes y dame un resumen con enlaces.",
+      "Do a short web research pass on recent LM Studio updates. Use web search, read relevant sources, and return a concise summary with links.",
   },
   {
     icon: FolderKanban,
-    title: "Archivos locales",
-    description: "Ordenar, convertir, renombrar y preparar carpetas.",
+    title: "Local files",
+    description: "Organize, convert, rename, and prepare folders.",
+    hint: "Plan safe local file operations before running them.",
     prompt:
-      "Busca en las skills de R herramientas para organizar archivos locales. Propón un flujo seguro para ordenar una carpeta de Descargas sin ejecutar cambios todavía.",
+      "Find local R skills for organizing files. Propose a safe workflow for cleaning a Downloads folder without making changes yet.",
   },
   {
     icon: BarChart3,
-    title: "Datos",
-    description: "CSV, JSON, YAML, SQL y pequeñas estadísticas.",
+    title: "Data",
+    description: "CSV, JSON, YAML, SQL, and small statistics.",
+    hint: "Explore data tools for lightweight local analysis.",
     prompt:
-      "Busca en las skills de R herramientas para CSV, JSON y análisis de datos. Dame 3 ejemplos útiles para una persona no técnica.",
+      "Find R skills for CSV, JSON, and data analysis. Give 3 useful examples for a non-technical person.",
   },
   {
     icon: Code2,
-    title: "Código",
-    description: "Git, análisis, generación y explicación.",
+    title: "Code",
+    description: "Git, analysis, generation, and explanation.",
+    hint: "Use local tools to inspect and improve code projects.",
     prompt:
-      "Busca en las skills de R herramientas para trabajar con código y git. Resume cómo podrían ayudar en un proyecto local.",
+      "Find R skills for code and git workflows. Summarize how they could help with a local project.",
   },
   {
     icon: Wrench,
-    title: "Explorar R",
-    description: "Ver catálogo, elegir tools y probar una ejecución.",
+    title: "Explore R",
+    description: "Browse the catalog, choose tools, and test safely.",
+    hint: "Map the installed R skill catalog without flooding the model.",
     prompt:
-      "Usa r_catalog para ver las skills de R disponibles. Dame un mapa compacto por categorías, sin listar todas las tools.",
+      "Use r_catalog to inspect the available R skills. Return a compact category map without listing every tool.",
   },
 ];
 
 const TRUST_POINTS = [
-  "Modelo local vía LM Studio",
-  "R skills bajo demanda",
-  "Permisos sensibles bloqueados",
-  "Web con fuentes y enlaces",
+  "Local model via LM Studio",
+  "R skills on demand",
+  "Sensitive actions blocked",
+  "Source-backed web research",
 ];
 
 const PDF_WORKFLOWS = [
   {
-    title: "Resumir PDF",
+    title: "Summarize",
     tool: "ocr.extract_text_from_pdf",
-    description: "Extrae texto, detecta si necesita OCR y devuelve resumen con puntos clave.",
+    description: "Extract text, detect scanned pages, and produce structured notes.",
+    hint: "Ask for a PDF path, extract text locally, then summarize it.",
     prompt:
-      "Quiero resumir un PDF local. Busca primero tools de R para PDF/OCR, prioriza ocr.extract_text_from_pdf si el documento puede estar escaneado, pideme la ruta del archivo y no ejecutes nada hasta tenerla. Despues resume el contenido con puntos clave, posibles acciones y dudas abiertas.",
+      "I want to summarize a local PDF. First search R PDF/OCR tools, prefer ocr.extract_text_from_pdf if the file may be scanned, ask me for the input path, and do not run anything until you have it. Then summarize the content with key points, action items, and open questions.",
   },
   {
-    title: "OCR buscable",
+    title: "Searchable OCR",
     tool: "ocr.ocr_to_searchable_pdf",
-    description: "Convierte un escaneado en PDF con texto seleccionable.",
+    description: "Turn scanned documents into selectable, searchable PDFs.",
+    hint: "Create a new searchable PDF without touching the original.",
     prompt:
-      "Quiero convertir un PDF escaneado en un PDF buscable. Usa r_search_tools para confirmar la tool OCR adecuada, pideme ruta de entrada, ruta de salida e idioma, y luego llama r_call_tool con ocr.ocr_to_searchable_pdf solo cuando tenga esos datos.",
+      "I want to convert a scanned PDF into a searchable PDF. Use r_search_tools to confirm the right OCR tool, ask for input path, output path, and language, then call r_call_tool with ocr.ocr_to_searchable_pdf only after you have those details.",
   },
   {
-    title: "Unir PDFs",
+    title: "Merge",
     tool: "pdftools.pdf_merge",
-    description: "Combina varios PDFs en un solo archivo.",
+    description: "Combine multiple PDFs into one ordered output file.",
+    hint: "Ask for ordered input paths and a new output path.",
     prompt:
-      "Quiero unir varios PDFs locales. Busca la tool de R para merge de PDFs, pideme la lista de rutas en orden y la ruta de salida, verifica que no vas a sobrescribir originales sin permiso, y despues prepara la llamada a pdftools.pdf_merge.",
+      "I want to merge several local PDFs. Find the R merge tool, ask for the ordered input paths and output path, verify that originals will not be overwritten, then prepare the pdftools.pdf_merge call.",
   },
   {
-    title: "Separar páginas",
+    title: "Extract pages",
     tool: "pdftools.pdf_extract",
-    description: "Extrae rangos concretos o divide documentos grandes.",
+    description: "Pull out selected pages or ranges into a new PDF.",
+    hint: "Extract a page range while preserving the source document.",
     prompt:
-      "Quiero extraer paginas de un PDF. Busca las tools de pdftools, pideme ruta del PDF, paginas o rangos y ruta de salida. No modifiques el original; prepara una llamada segura a pdftools.pdf_extract.",
+      "I want to extract pages from a PDF. Search pdftools, ask for the input PDF path, pages or ranges, and output path. Do not modify the original; prepare a safe pdftools.pdf_extract call.",
   },
   {
-    title: "Informe PDF",
+    title: "Report",
     tool: "pdf.generate_pdf",
-    description: "Genera un informe desde texto o Markdown.",
+    description: "Generate polished PDFs from text or Markdown.",
+    hint: "Turn notes or Markdown into a clean report file.",
     prompt:
-      "Quiero generar un informe PDF. Busca las tools de R para crear PDFs desde Markdown/texto, pideme titulo, contenido o ruta Markdown, plantilla y ruta de salida. Usa pdf.generate_pdf o pdf.markdown_to_pdf segun convenga.",
+      "I want to generate a PDF report. Search R tools for creating PDFs from text or Markdown, ask for title, content or Markdown path, template, and output path. Use pdf.generate_pdf or pdf.markdown_to_pdf as appropriate.",
   },
   {
-    title: "Rotar/comprimir",
+    title: "Repair",
     tool: "pdftools.pdf_rotate",
-    description: "Arregla orientación o reduce tamaño del documento.",
+    description: "Rotate pages or compress large PDFs safely.",
+    hint: "Fix orientation or reduce file size into a new output.",
     prompt:
-      "Quiero arreglar un PDF rotando paginas o reduciendo su tamaño. Busca tools de pdftools para rotate/compress, pideme ruta, operacion exacta, paginas afectadas y ruta de salida. Mantén intacto el original.",
+      "I want to repair a PDF by rotating pages or reducing file size. Search pdftools for rotate/compress tools, ask for path, exact operation, affected pages, and output path. Keep the original intact.",
   },
 ];
 
@@ -229,22 +241,23 @@ function App() {
 
   return (
     <main className="app-shell">
-      <section className="sidebar" aria-label="Estado">
-        <div>
-          <p className="eyebrow">Local agent</p>
-          <h1>Eve + LM Studio</h1>
+      <section className="sidebar" aria-label="System status">
+        <div className="brand-lockup">
+          <p className="eyebrow">Local workspace</p>
+          <h1>R Workbench</h1>
+          <span>Private automation console</span>
         </div>
 
         <div className="status-panel">
           <span className={`status-dot ${agent.status}`} />
           <div>
             <strong>{statusLabel(agent.status)}</strong>
-            <p>Backend Eve via proxy local</p>
+            <p>Eve backend through local proxy</p>
           </div>
         </div>
 
         <div className="settings-block">
-          <span>Modelo</span>
+          <span>Model</span>
           <strong>{import.meta.env.VITE_MODEL_LABEL || "LM Studio local"}</strong>
         </div>
 
@@ -253,9 +266,15 @@ function App() {
           <strong>ABC RSS / R skills / Web search</strong>
         </div>
 
-        <button className="secondary-button" onClick={agent.reset} type="button">
+        <button
+          className="secondary-button tooltip-control"
+          data-tooltip="Clear the current Eve session and start fresh."
+          onClick={agent.reset}
+          title="Clear the current Eve session and start fresh."
+          type="button"
+        >
           <RotateCcw size={16} />
-          Nueva sesion
+          New session
         </button>
 
         <SkillExplorer
@@ -277,29 +296,49 @@ function App() {
       <section className="chat-panel" aria-label="Chat">
         <div className="messages">
           {messages.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-header">
-                <Sparkles size={28} />
-                <h2>Elige una tarea para tu ordenador.</h2>
+            <div className="empty-state dashboard">
+              <header className="dashboard-header">
+                <div>
+                  <p className="eyebrow">Desktop-grade local AI</p>
+                  <h2>Start with a task, not a prompt.</h2>
+                </div>
                 <p>
-                  R aporta 82 skills y 560 tools; Eve las busca y ejecuta bajo demanda para que el modelo local no se ahogue con todo el catálogo.
+                  Eve routes requests to LM Studio and the local R skill catalog. The interface keeps the model focused, exposes tool activity, and blocks sensitive actions by default.
                 </p>
-              </div>
-              <section className="pdf-workbench" aria-label="Documentos PDF">
+              </header>
+
+              <section className="system-strip" aria-label="System capabilities">
+                <div>
+                  <strong>{catalog?.skillCount ?? "--"}</strong>
+                  <span>skills indexed</span>
+                </div>
+                <div>
+                  <strong>{catalog?.toolCount ?? "--"}</strong>
+                  <span>tools available</span>
+                </div>
+                <div>
+                  <strong>{permissionSummary?.blockedCount ?? "--"}</strong>
+                  <span>blocked by default</span>
+                </div>
+              </section>
+
+              <section className="pdf-workbench" aria-label="PDF workbench">
                 <div className="pdf-workbench-header">
                   <FileText size={18} />
                   <div>
-                    <h3>Documentos PDF</h3>
-                    <p>OCR, resumen, union, extraccion y generacion de informes con R local.</p>
+                    <h3>PDF workbench</h3>
+                    <p>OCR, summarize, merge, extract, repair, and generate reports locally.</p>
                   </div>
                 </div>
                 <div className="pdf-action-grid">
                   {PDF_WORKFLOWS.map((workflow) => (
                     <button
-                      className="pdf-action"
+                      className="pdf-action tooltip-control"
+                      data-tooltip={workflow.hint}
                       disabled={agent.status !== "ready"}
                       key={workflow.title}
                       onClick={() => sendMessage(workflow.prompt)}
+                      title={workflow.hint}
                       type="button"
                     >
                       <span>{workflow.title}</span>
@@ -309,13 +348,16 @@ function App() {
                   ))}
                 </div>
               </section>
-              <div className="workflow-grid">
+
+              <section className="workflow-grid" aria-label="Core functions">
                 {WORKFLOWS.map((workflow) => (
                   <button
-                    className="workflow-card"
+                    className="workflow-card tooltip-control"
+                    data-tooltip={workflow.hint}
                     disabled={agent.status !== "ready"}
                     key={workflow.title}
                     onClick={() => sendMessage(workflow.prompt)}
+                    title={workflow.hint}
                     type="button"
                   >
                     <workflow.icon size={19} />
@@ -323,7 +365,7 @@ function App() {
                     <p>{workflow.description}</p>
                   </button>
                 ))}
-              </div>
+              </section>
               <div className="trust-strip">
                 {TRUST_POINTS.map((point) => (
                   <span key={point}>
@@ -340,12 +382,15 @@ function App() {
 
         {agent.error ? <div className="error-box">{String(agent.error.message ?? agent.error)}</div> : null}
 
-        <div className="quickbar" aria-label="Acciones rápidas">
+        <div className="quickbar" aria-label="Quick actions">
           {WORKFLOWS.slice(0, 4).map((workflow) => (
             <button
+              className="tooltip-control"
+              data-tooltip={workflow.hint}
               disabled={agent.status !== "ready"}
               key={workflow.title}
               onClick={() => sendMessage(workflow.prompt)}
+              title={workflow.hint}
               type="button"
             >
               <workflow.icon size={15} />
@@ -356,7 +401,7 @@ function App() {
 
         <form className="composer" onSubmit={onSubmit}>
           <textarea
-            aria-label="Mensaje"
+            aria-label="Message"
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
@@ -364,15 +409,29 @@ function App() {
                 event.currentTarget.form?.requestSubmit();
               }
             }}
-            placeholder="Escribe una tarea para Eve..."
+            placeholder="Describe a task for Eve..."
             value={input}
           />
           {agent.status === "submitted" || agent.status === "streaming" ? (
-            <button aria-label="Detener" onClick={agent.stop} type="button">
+            <button
+              aria-label="Stop"
+              className="tooltip-control"
+              data-tooltip="Stop the current response."
+              onClick={agent.stop}
+              title="Stop the current response."
+              type="button"
+            >
               <Square size={18} />
             </button>
           ) : (
-            <button aria-label="Enviar" disabled={!input.trim()} type="submit">
+            <button
+              aria-label="Send"
+              className="tooltip-control"
+              data-tooltip="Send this task to the local agent."
+              disabled={!input.trim()}
+              title="Send this task to the local agent."
+              type="submit"
+            >
               <Send size={18} />
             </button>
           )}
@@ -391,7 +450,7 @@ function ChatMessage({ message }: { message: EveMessage }) {
 
   return (
     <article className={`message ${message.role}`}>
-      <div className="message-role">{message.role === "user" ? "Tu" : "Eve"}</div>
+      <div className="message-role">{message.role === "user" ? "You" : "Eve"}</div>
       <div className="message-body">{text}</div>
     </article>
   );
@@ -425,19 +484,19 @@ function ToolLog({
       <div className="tool-log-header">
         <div>
           <h2>Historial</h2>
-          <p>{history.total ? `${history.total} ejecuciones en esta sesion` : "Sin ejecuciones"}</p>
+          <p>{history.total ? `${history.total} runs this session` : "No runs yet"}</p>
         </div>
         <Activity size={16} />
       </div>
 
       {history.total ? (
-        <div className="tool-summary" aria-label="Resumen de herramientas">
-          <span>{history.finished} terminadas</span>
-          <span>{history.running} en curso</span>
+        <div className="tool-summary" aria-label="Tool summary">
+          <span>{history.finished} finished</span>
+          <span>{history.running} running</span>
           <span>{history.distinctTools} tools</span>
         </div>
       ) : (
-        <p className="muted">Las herramientas apareceran aqui cuando el agente actue.</p>
+        <p className="muted">Tool activity will appear here when the agent acts.</p>
       )}
 
       {events.length ? (
@@ -472,13 +531,13 @@ function SkillExplorer({
     <div className="skill-panel">
       <div className="skill-panel-header">
         <h2>R skills</h2>
-        <span>{catalog ? `${catalog.skillCount} / ${catalog.toolCount}` : "cargando"}</span>
+        <span>{catalog ? `${catalog.skillCount} / ${catalog.toolCount}` : "loading"}</span>
       </div>
 
       <input
-        aria-label="Buscar tools de R"
+        aria-label="Search R tools"
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Buscar PDF, CSV, QR..."
+        placeholder="Search PDF, CSV, QR..."
         value={query}
       />
 
@@ -502,7 +561,7 @@ function SkillExplorer({
 
           {selectedSkillData && !query ? (
             <p className="skill-summary">
-              {selectedSkillData.description || "Skill local de R."}
+              {selectedSkillData.description || "Local R skill."}
             </p>
           ) : null}
 
@@ -512,19 +571,25 @@ function SkillExplorer({
                 <div>
                   <strong>{tool.name}</strong>
                   <span className={tool.skillBlocked ? "blocked" : ""}>
-                    {tool.skillBlocked ? "bloqueada" : tool.skill}
+                    {tool.skillBlocked ? "blocked" : tool.skill}
                   </span>
                 </div>
                 <p>{tool.description}</p>
-                <button onClick={() => onUseTool(tool.skill, tool)} type="button">
-                  Usar
+                <button
+                  className="tooltip-control"
+                  data-tooltip="Create a guided prompt for this exact R tool."
+                  onClick={() => onUseTool(tool.skill, tool)}
+                  title="Create a guided prompt for this exact R tool."
+                  type="button"
+                >
+                  Use
                 </button>
               </div>
             ))}
           </div>
         </>
       ) : (
-        <p className="skill-summary">Ejecuta `npm run r:catalog` si el catálogo no aparece.</p>
+        <p className="skill-summary">Run `npm run r:catalog` if the catalog does not appear.</p>
       )}
     </div>
   );
@@ -537,30 +602,30 @@ function PermissionPanel({ summary }: { summary: PermissionSummary | null }) {
     <div className="permission-panel">
       <div className="permission-title">
         <ShieldAlert size={16} />
-        <h2>Permisos</h2>
+        <h2>Permissions</h2>
       </div>
 
       {summary ? (
         <>
-          <div className="permission-meter" aria-label="Resumen de permisos">
+          <div className="permission-meter" aria-label="Permission summary">
             <div>
               <strong>{summary.allowedCount}</strong>
-              <span>listas</span>
+              <span>ready</span>
             </div>
             <div>
               <strong>{summary.blockedCount}</strong>
-              <span>bloqueadas</span>
+              <span>blocked</span>
             </div>
           </div>
 
           <p>
-            Las skills sensibles no se ejecutan desde la UI por defecto. Para abrirlas, arranca Eve con
+            Sensitive skills are blocked by default. To unlock them, start Eve with
             {" "}
             <code>R_BRIDGE_ALLOW_DANGEROUS=1</code>.
           </p>
 
           {visibleBlocked.length ? (
-            <div className="blocked-list" aria-label="Skills bloqueadas">
+            <div className="blocked-list" aria-label="Blocked skills">
               {visibleBlocked.map((skill) => (
                 <span key={skill}>{skill}</span>
               ))}
@@ -568,7 +633,7 @@ function PermissionPanel({ summary }: { summary: PermissionSummary | null }) {
           ) : null}
         </>
       ) : (
-        <p>Cargando perfil local de permisos.</p>
+        <p>Loading local permission profile.</p>
       )}
     </div>
   );
@@ -576,12 +641,12 @@ function PermissionPanel({ summary }: { summary: PermissionSummary | null }) {
 
 function buildToolPrompt(skill: string, tool: RTool) {
   return [
-    `Quiero usar una tool de R.`,
+    `I want to use an R tool.`,
     `Skill: ${skill}`,
     `Tool: ${tool.name}`,
-    `Descripción: ${tool.description}`,
-    `Parámetros esperados: ${JSON.stringify(tool.parameters ?? {}, null, 2)}`,
-    `Primero explícame qué datos necesitas. Si ya tienes todos los datos, llama r_call_tool con esos parámetros.`,
+    `Description: ${tool.description}`,
+    `Expected parameters: ${JSON.stringify(tool.parameters ?? {}, null, 2)}`,
+    `First explain which inputs you need. If all inputs are already available, call r_call_tool with those parameters.`,
   ].join("\n");
 }
 
@@ -595,15 +660,15 @@ function partToText(part: EveMessagePart) {
 
 function statusLabel(status: string) {
   if (status === "submitted") {
-    return "Enviando";
+    return "Sending";
   }
   if (status === "streaming") {
-    return "Respondiendo";
+    return "Responding";
   }
   if (status === "error") {
     return "Error";
   }
-  return "Listo";
+  return "Ready";
 }
 
 type PermissionSummary = {
@@ -656,13 +721,13 @@ function summarizeToolEvents(
 
 function stateLabel(state: string) {
   if (state === "output-available") {
-    return "terminada";
+    return "finished";
   }
   if (state === "output-error") {
     return "error";
   }
   if (state === "input-streaming" || state === "input-available") {
-    return "en curso";
+    return "running";
   }
   return state;
 }
