@@ -338,6 +338,23 @@ const RESEARCH_WORKFLOWS: Array<{ mode: string } & LocalizedEntry> = [
     },
   },
   {
+    mode: "save",
+    en: {
+      title: "Save note",
+      description: "Turn research into a Markdown file in the workspace.",
+      hint: "Use after a research pass to keep sources and summary.",
+      prompt:
+        "I want to save a research note. If we already have research results, use save_research_note with the summary and sources. If not, ask me for the research question, run web_research first, then save a Markdown note in the workspace.",
+    },
+    es: {
+      title: "Guardar nota",
+      description: "Convierte la investigacion en un Markdown dentro del workspace.",
+      hint: "Usalo despues de investigar para conservar fuentes y resumen.",
+      prompt:
+        "Quiero guardar una nota de investigacion. Si ya tenemos resultados, usa save_research_note con el resumen y las fuentes. Si no, pideme la pregunta, ejecuta web_research primero y luego guarda una nota Markdown en el workspace.",
+    },
+  },
+  {
     mode: "site",
     en: {
       title: "Specific site",

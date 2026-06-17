@@ -113,6 +113,7 @@ Research tools:
 - `web_search`: finds candidate links and returns normalized source cards.
 - `fetch_page`: reads one URL and returns clean Markdown.
 - `web_research`: searches, reads the best sources, and returns cited research material.
+- `save_research_note`: saves a source-backed Markdown note under `~/AI-Native-OS/Reports/Research`.
 
 For serious answers, AI Native OS should read sources before answering instead of relying on snippets alone.
 

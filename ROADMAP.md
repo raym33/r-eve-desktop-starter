@@ -45,8 +45,9 @@ Status: implemented in this starter.
 - Source cards with title, URL, snippet, provider, quality, rank, and fetch status. **Implemented.**
 - `web_research`: search, read top sources, and return cited research material. **Implemented.**
 - First-screen Web Research actions for quick, deep, and site-specific research. **Implemented.**
+- Save research notes as Markdown under the workspace. **Implemented (v1).**
 - Research collections.
-- Export to Markdown, PDF, and clipboard-safe text.
+- Export to PDF and clipboard-safe text.
 - Better handling for weak fallback search providers.
 
 ## Phase 4: Permission System
