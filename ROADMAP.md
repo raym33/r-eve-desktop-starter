@@ -21,13 +21,13 @@ Status: implemented in this starter.
 
 ## Phase 2: Professional Document Workflows
 
+- Workspace folder (`~/AI-Native-OS` with Inbox/Outputs/Reports/OCR/Receipts/Drafts/Logs) created on demand; `workspace-info` reports it. Opt-in `R_BRIDGE_WORKSPACE_ONLY` keeps file paths inside the workspace (plus `R_BRIDGE_WORKSPACE_ALLOW` dirs). **Implemented.**
+- Run receipts: every executed tool call writes a JSON receipt to `<workspace>/Receipts` and appends to `Logs/receipts.jsonl` (tool, params, paths, status, timestamp, approved). **Implemented.**
 - File picker with scoped folders.
 - Drag-and-drop PDF intake.
-- Persistent output folder.
 - Result previews for generated PDFs.
 - OCR language presets.
 - Batch PDF actions.
-- Run receipts with input paths, output paths, tool name, and timestamp.
 
 ## Phase 2.5: Skill Forge
 

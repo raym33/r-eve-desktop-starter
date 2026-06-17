@@ -67,6 +67,149 @@ def _json_out(payload: Any) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
 
 
+_WORKSPACE_SUBFOLDERS = ("Inbox", "Outputs", "Reports", "OCR", "Receipts", "Drafts", "Logs")
+_URL_SCHEME = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
+
+
+def _workspace_root() -> Path:
+    return Path(os.environ.get("AI_NATIVE_OS_WORKSPACE", "~/AI-Native-OS")).expanduser().resolve()
+
+
+def _ensure_workspace() -> Path:
+    root = _workspace_root()
+    root.mkdir(parents=True, exist_ok=True)
+    for name in _WORKSPACE_SUBFOLDERS:
+        (root / name).mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _receipts_enabled() -> bool:
+    return os.environ.get("R_BRIDGE_RECEIPTS") != "0"
+
+
+def _workspace_only_enabled() -> bool:
+    return os.environ.get("R_BRIDGE_WORKSPACE_ONLY") == "1"
+
+
+def _workspace_allowlist() -> list[Path]:
+    paths: list[Path] = []
+    for item in os.environ.get("R_BRIDGE_WORKSPACE_ALLOW", "").split(","):
+        value = item.strip()
+        if value:
+            path = Path(value).expanduser()
+            if path.is_absolute():
+                paths.append(path.resolve())
+    return paths
+
+
+def _stringify_receipt_value(value: Any) -> str:
+    if isinstance(value, str):
+        text = value
+    else:
+        try:
+            text = json.dumps(value, ensure_ascii=False, default=str)
+        except (TypeError, ValueError):
+            text = str(value)
+    return text[:2000]
+
+
+def _receipt_file_part(value: str) -> str:
+    part = re.sub(r"[^a-zA-Z0-9_.-]+", "_", value.strip()).strip("._-")
+    return part[:80] or "unknown"
+
+
+def _write_receipt(
+    skill: str,
+    tool: str,
+    params: dict[str, Any],
+    *,
+    confirmed: bool,
+    status: str,
+    output: Any = None,
+    error: Any = None,
+) -> str | None:
+    if not _receipts_enabled():
+        return None
+    try:
+        root = _ensure_workspace()
+        timestamp = datetime.now(timezone.utc).isoformat()
+        receipt: dict[str, Any] = {
+            "timestamp": timestamp,
+            "skill": skill,
+            "tool": tool,
+            "params": params,
+            "confirmed": bool(confirmed),
+            "status": status,
+        }
+        if status == "success":
+            receipt["output"] = _stringify_receipt_value(output)
+        else:
+            receipt["error"] = _stringify_receipt_value(error)
+
+        compact = (
+            datetime.now(timezone.utc)
+            .strftime("%Y%m%dT%H%M%S%fZ")
+        )
+        filename = (
+            f"{compact}-{_receipt_file_part(skill)}-{_receipt_file_part(tool)}.json"
+        )
+        receipt_path = root / "Receipts" / filename
+        text = json.dumps(receipt, ensure_ascii=False, indent=2, default=str) + "\n"
+        receipt_path.write_text(text, encoding="utf-8")
+        with open(root / "Logs" / "receipts.jsonl", "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(receipt, ensure_ascii=False, default=str) + "\n")
+        return str(receipt_path)
+    except Exception:
+        return None
+
+
+def _looks_like_path(value: str) -> bool:
+    if not value:
+        return False
+    if _URL_SCHEME.match(value):
+        return False
+    return value.startswith("~") or os.path.isabs(value) or os.sep in value or "/" in value
+
+
+def _is_within(path: Path, roots: list[Path]) -> bool:
+    try:
+        resolved = path.expanduser().resolve()
+    except OSError:
+        resolved = path.expanduser().absolute()
+    for root in roots:
+        try:
+            resolved_root = root.expanduser().resolve()
+        except OSError:
+            resolved_root = root.expanduser().absolute()
+        if resolved == resolved_root or resolved.is_relative_to(resolved_root):
+            return True
+    return False
+
+
+def _iter_string_values(value: Any):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _iter_string_values(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            yield from _iter_string_values(item)
+
+
+def _enforce_workspace_only(params: dict[str, Any]) -> None:
+    if not _workspace_only_enabled():
+        return
+    root = _workspace_root()
+    roots = [root, *_workspace_allowlist()]
+    for value in _iter_string_values(params):
+        if _looks_like_path(value) and not _is_within(Path(value), roots):
+            raise SystemExit(
+                f"Path '{value}' is outside the AI Native OS workspace ({root}). "
+                "Use a path inside the workspace or add an absolute directory to R_BRIDGE_WORKSPACE_ALLOW."
+            )
+
+
 def _load_catalog() -> list[dict[str, Any]]:
     from r_cli.core.config import Config
     from r_cli.skills import get_all_skills
@@ -660,6 +803,8 @@ def cmd_call(args: argparse.Namespace) -> None:
     if not isinstance(params, dict):
         raise SystemExit("params must be a JSON object")
 
+    _enforce_workspace_only(params)
+
     # NOTE: `confirm` is a single boolean supplied by the caller (the model).
     # This blocks accidental one-shot execution and forces a preview turn, but
     # it does NOT prove a human approved the action: a misbehaving model could
@@ -686,19 +831,55 @@ def cmd_call(args: argparse.Namespace) -> None:
 
     from r_cli.tool_runner import execute_tool, normalize_result
 
-    result = execute_tool(
+    try:
+        result = execute_tool(
+            args.skill,
+            args.tool,
+            params,
+            auto_approve=True,
+            source="eve-r-bridge",
+        )
+    except Exception as exc:
+        _write_receipt(
+            args.skill,
+            args.tool,
+            params,
+            confirmed=confirmed,
+            status="error",
+            error=str(exc),
+        )
+        raise
+    normalized = normalize_result(result)
+    _write_receipt(
         args.skill,
         args.tool,
         params,
-        auto_approve=True,
-        source="eve-r-bridge",
+        confirmed=confirmed,
+        status="success",
+        output=normalized,
     )
     _json_out(
         {
             "skill": args.skill,
             "tool": args.tool,
             "confirmed": confirmed,
-            "result": normalize_result(result),
+            "result": normalized,
+        }
+    )
+
+
+def cmd_workspace_info(args: argparse.Namespace) -> None:
+    root = _ensure_workspace()
+    receipts_dir = root / "Receipts"
+    _json_out(
+        {
+            "ok": True,
+            "root": str(root),
+            "subfolders": {name: str(root / name) for name in _WORKSPACE_SUBFOLDERS},
+            "workspaceOnly": _workspace_only_enabled(),
+            "allow": [str(path) for path in _workspace_allowlist()],
+            "receipts": len(list(receipts_dir.glob("*.json"))),
+            "receiptsEnabled": _receipts_enabled(),
         }
     )
 
@@ -726,6 +907,9 @@ def main() -> int:
     call.add_argument("--params", default="{}")
     call.add_argument("--confirm", action="store_true")
     call.set_defaults(func=cmd_call)
+
+    workspace_info = subparsers.add_parser("workspace-info")
+    workspace_info.set_defaults(func=cmd_workspace_info)
 
     draft_skill = subparsers.add_parser("draft-skill")
     draft_skill.add_argument("--request", required=True)
