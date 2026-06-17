@@ -8,12 +8,16 @@ const lmstudio = createOpenAICompatible({
   supportsStructuredOutputs: false,
 });
 
-const contextWindowTokens = Number(process.env.LM_STUDIO_CONTEXT_TOKENS ?? 65536);
-const maxOutputTokens = Number(process.env.LM_STUDIO_MAX_OUTPUT_TOKENS ?? 4096);
+const configuredContextWindowTokens = process.env.LM_STUDIO_CONTEXT_TOKENS
+  ? Number(process.env.LM_STUDIO_CONTEXT_TOKENS)
+  : 1024;
+const maxOutputTokens = Number(process.env.LM_STUDIO_MAX_OUTPUT_TOKENS ?? 128);
 
 export default defineAgent({
-  model: lmstudio.chatModel(process.env.LM_STUDIO_MODEL ?? "local-model"),
-  modelContextWindowTokens: contextWindowTokens,
+  model: lmstudio.chatModel(process.env.LM_STUDIO_MODEL ?? "qwen2.5-7b-instruct"),
+  ...(configuredContextWindowTokens
+    ? { modelContextWindowTokens: configuredContextWindowTokens }
+    : {}),
   modelOptions: {
     providerOptions: {
       lmstudio: {
@@ -21,8 +25,12 @@ export default defineAgent({
       },
     },
   },
-  compaction: {
-    modelContextWindowTokens: contextWindowTokens,
-    thresholdPercent: 0.85,
-  },
+  ...(configuredContextWindowTokens
+    ? {
+        compaction: {
+          modelContextWindowTokens: configuredContextWindowTokens,
+          thresholdPercent: 0.85,
+        },
+      }
+    : {}),
 });

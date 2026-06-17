@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { prepareWhatsAppReply } from "../lib/experimentalConnectors.js";
+import { prepareWhatsAppReply } from "../../agent/lib/experimentalConnectors.js";
 
 export default defineTool({
   description:

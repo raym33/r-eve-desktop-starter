@@ -12,11 +12,10 @@ AI Native OS is the local-first, permission-aware layer on top of Eve, LM Studio
 
 - Summarize a folder of PDFs into a report.
 - Turn scanned PDFs into searchable PDFs.
-- Search the web and write cited research notes.
-- Look up Spanish legislation (BOE) and local legal sources (Lexia) with citations.
-- Draft emails and documents — without sending anything automatically.
+- Search the web with a compact local web tool.
+- Enable optional packs for deep research notes, Spanish legal sources, Skill Forge, email drafts, and WhatsApp drafts.
 - Organize local files safely, preserving the originals.
-- Create new local tools through Skill Forge, but only after review.
+- Create new local tools through the optional Skill Forge pack, but only after review.
 
 The UI is bilingual (Spanish / English) with a language toggle.
 
@@ -26,12 +25,13 @@ The UI is bilingual (Spanish / English) with a language toggle.
 - Eve agent runtime with streaming and tool calls.
 - Confirmation gate + human-in-the-loop approval before outward or irreversible actions (e.g. sending email).
 - Web search through SearXNG, Brave, Tavily, or DuckDuckGo Instant Answer fallback.
-- Research workflow with normalized source cards, source quality, page reading, and optional Firecrawl extraction.
+- Compact default agent profile for local models: only R catalog/tool execution and web search are active by default.
 - `raym33/r` bridge with catalog search and targeted tool execution.
-- Spanish legal research via the local Lexia RAG service (`lexia_*` tools) and BOE lookup (`boe_query`).
+- Optional deep research pack with page reading, saved notes, source quality, and Firecrawl extraction.
+- Optional Spanish legal research pack via the local Lexia RAG service (`lexia_*` tools) and BOE lookup (`boe_query`).
 - Guided PDF workbench for OCR, summaries, merging, page extraction, repair, and report generation.
-- Skill Forge with a reviewed draft → approve → install pipeline (nothing is installed or executed automatically).
-- Experimental secure communication connectors for Gmail/Microsoft 365 drafts and WhatsApp Business Cloud API workflows.
+- Optional Skill Forge pack with a reviewed draft → approve → install pipeline.
+- Optional experimental secure communication pack for Gmail/Microsoft 365 drafts and WhatsApp Business Cloud API workflows.
 - Permission panel that shows ready and blocked skill families.
 - Session tool history for auditability.
 - Setup status checks for LM Studio, the selected model, the R catalog, the R bridge, Lexia, search, and workspace mode.
@@ -51,8 +51,8 @@ The UI is bilingual (Spanish / English) with a language toggle.
 This repository embeds `raym33/r` as a git submodule at `./r`.
 
 ```bash
-git clone --recurse-submodules https://github.com/raym33/r-eve-desktop-starter.git
-cd r-eve-desktop-starter
+git clone --recurse-submodules https://github.com/raym33/ainativeos.git
+cd ainativeos
 ```
 
 If you already cloned without submodules:
@@ -86,10 +86,26 @@ npm run r:catalog
 Edit:
 
 ```bash
-LM_STUDIO_MODEL=your-local-model-id
-LM_STUDIO_CONTEXT_TOKENS=65536
-LM_STUDIO_MAX_OUTPUT_TOKENS=4096
+LM_STUDIO_MODEL=qwen2.5-7b-instruct
+LM_STUDIO_CONTEXT_TOKENS=1024
+LM_STUDIO_MAX_OUTPUT_TOKENS=128
+VITE_EVE_TARGET=http://127.0.0.1:4274
 ```
+
+For a one-command home setup after cloning:
+
+```bash
+npm run setup:home
+npm run doctor:lmstudio
+```
+
+After starting Eve with `npm run start:local`, run:
+
+```bash
+npm run doctor:eve
+```
+
+`doctor:eve` has a timeout and verifies that the compact agent can complete an R catalog tool turn. If it times out, keep the active tool set small, try a non-reasoning model, or increase the loaded context in LM Studio and match `LM_STUDIO_CONTEXT_TOKENS`.
 
 For web search, configure one provider:
 
@@ -109,9 +125,12 @@ FIRECRAWL_API_KEY=...
 FIRECRAWL_BASE_URL=https://api.firecrawl.dev
 ```
 
-Research tools:
+Default research tool:
 
 - `web_search`: finds candidate links and returns normalized source cards.
+
+Optional deep research tools live under `optional-tools/research` and can be copied into `agent/tools` when you want a larger agent:
+
 - `fetch_page`: reads one URL and returns clean Markdown.
 - `web_research`: searches, reads the best sources, and returns cited research material.
 - `save_research_note`: saves a source-backed Markdown note under `~/AI-Native-OS/Reports/Research`.
@@ -124,11 +143,11 @@ GET /api/research-notes
 GET /api/research-notes?id=<filename.md>
 ```
 
-For serious answers, AI Native OS should read sources before answering instead of relying on snippets alone.
+For serious answers, enable the deep research pack so AI Native OS can read pages instead of relying on snippets alone.
 
 ## Experimental Email And WhatsApp
 
-AI Native OS includes opt-in experimental connectors for everyday communication workflows:
+AI Native OS includes opt-in experimental connectors under `optional-tools/experimental` for everyday communication workflows:
 
 - email status checks;
 - read-only email metadata/snippet listing;
@@ -136,7 +155,7 @@ AI Native OS includes opt-in experimental connectors for everyday communication 
 - local WhatsApp reply drafts;
 - guarded WhatsApp Business Cloud API sending, disabled by default.
 
-These connectors are not enabled unless credentials are provided in `.env`. Email sending is intentionally not implemented; the system can create drafts only. WhatsApp uses the official Business Cloud API, not WhatsApp Web scraping.
+These connectors are not active in the compact default agent. Copy the relevant files from `optional-tools/experimental` into `agent/tools`, rebuild, and provide credentials in `.env`. Email sending is intentionally not implemented; the system can create drafts only. WhatsApp uses the official Business Cloud API, not WhatsApp Web scraping.
 
 See [Experimental Connectors](docs/EXPERIMENTAL_CONNECTORS.md).
 
@@ -146,13 +165,13 @@ Terminal 1:
 
 ```bash
 npm run build
-npm run start
+npm run start:local
 ```
 
 Terminal 2:
 
 ```bash
-npm run web
+npm run web:local
 ```
 
 Open:
@@ -161,9 +180,11 @@ Open:
 http://127.0.0.1:5173
 ```
 
-If Eve is not running at `http://127.0.0.1:3000`, change `VITE_EVE_TARGET` in `.env`.
+The local Eve backend runs at `http://127.0.0.1:4274` by default. This avoids conflicts with other local apps on port `3000`.
 
-`npm run dev` opens Eve's interactive development mode. For a predictable local LM Studio start, `build` plus `start` is usually simpler.
+The default context is intentionally conservative (`1024`) because many LM Studio models are loaded with a small context unless you increase it in the model settings. If you raise the context in LM Studio, you can also set `LM_STUDIO_CONTEXT_TOKENS` to `4096`, `8192`, `32768`, or `65536`.
+
+`npm run dev` opens Eve's interactive development mode. For a predictable local LM Studio start, `build` plus `start:local` is usually simpler.
 
 The first screen includes a setup status panel. It checks local runtime readiness through:
 
@@ -232,13 +253,13 @@ Each action asks for paths and options before running `r_call_tool`. The recomme
 
 ## Skill Forge
 
-Skill Forge is the safe self-extension path:
+Skill Forge is optional. To enable it, copy the files from `optional-tools/forge` into `agent/tools` and rebuild. It provides the safe self-extension path:
 
 ```text
 request -> search existing tools -> explain the gap -> draft skill -> review -> test -> approve -> install
 ```
 
-When the agent cannot find a suitable R skill, it can call `skill_forge` to create a reviewable draft under `skill-drafts/<name>/`.
+When enabled and the agent cannot find a suitable R skill, it can call `skill_forge` to create a reviewable draft under `skill-drafts/<name>/`.
 
 Drafts include:
 
@@ -249,6 +270,18 @@ Drafts include:
 - `README.md` with the original request and review flow.
 
 Drafts are ignored by git by default and are never installed or executed automatically.
+
+## Optional Tool Packs
+
+The default agent is intentionally compact for local models. Optional tools are versioned in `optional-tools/`:
+
+- `optional-tools/research`: page reading, deep research, saved notes, exports.
+- `optional-tools/forge`: Skill Forge draft, review, approval, install flow.
+- `optional-tools/legal`: Lexia and BOE legal research helpers.
+- `optional-tools/news`: ABC.es news helper.
+- `optional-tools/experimental`: email and WhatsApp connectors.
+
+To enable a pack, copy its `.ts` files into `agent/tools`, run `npm run build`, and restart Eve. Keep the default compact profile for the most reliable home setup.
 
 ## Safety
 
@@ -265,4 +298,5 @@ Generated Skill Forge skills are never installed or executed automatically — t
 - [Project Structure](docs/STRUCTURE.md)
 - [Docker](docs/DOCKER.md)
 - [Experimental Connectors](docs/EXPERIMENTAL_CONNECTORS.md)
+- [Home Quickstart](docs/HOME_QUICKSTART.md)
 - [Roadmap](ROADMAP.md)

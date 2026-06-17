@@ -2,6 +2,8 @@
 
 AI Native OS includes early, opt-in communication connectors for email and WhatsApp.
 
+These tools live in `optional-tools/experimental` and are not active in the compact default agent. To enable them, copy the `.ts` files from that folder into `agent/tools`, run `npm run build`, and restart Eve.
+
 These connectors are intentionally conservative:
 
 - they read credentials only from environment variables;

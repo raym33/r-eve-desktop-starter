@@ -3,7 +3,7 @@ FROM node:24-bookworm-slim
 ENV NODE_ENV=development \
     R_BRIDGE_PYTHON=/app/.venv/bin/python \
     R_BRIDGE_SCRIPT=/app/scripts/r_bridge.py \
-    VITE_EVE_TARGET=http://127.0.0.1:3000
+    VITE_EVE_TARGET=http://127.0.0.1:4274
 
 WORKDIR /app
 
@@ -29,6 +29,6 @@ RUN python3 -m venv .venv \
   && npm run web:build \
   && npm run build
 
-EXPOSE 3000 5173
+EXPOSE 4274 5173
 
-CMD ["sh", "-lc", "npm run start & npm run web:docker"]
+CMD ["sh", "-lc", "npm run start:local & npm run web:docker"]

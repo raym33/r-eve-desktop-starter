@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { sendWhatsAppMessage } from "../lib/experimentalConnectors.js";
+import { sendWhatsAppMessage } from "../../agent/lib/experimentalConnectors.js";
 
 export default defineTool({
   description:

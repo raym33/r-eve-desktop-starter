@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { emailStatus } from "../lib/experimentalConnectors.js";
+import { emailStatus } from "../../agent/lib/experimentalConnectors.js";
 
 export default defineTool({
   description:

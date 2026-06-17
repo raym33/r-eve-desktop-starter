@@ -92,8 +92,9 @@ function titleFromMarkdown(markdown: string, fallback: string) {
 async function buildHealth(env: Record<string, string>, root: string) {
   const checks: HealthCheck[] = [];
   const lmStudioBaseUrl = env.LM_STUDIO_BASE_URL || "http://127.0.0.1:1234/v1";
-  const lmStudioModel = env.LM_STUDIO_MODEL || "local-model";
+  const lmStudioModel = env.LM_STUDIO_MODEL || "qwen2.5-7b-instruct";
   const lexiaBaseUrl = env.LEXIA_BASE_URL || "http://127.0.0.1:5174";
+  const eveTarget = env.VITE_EVE_TARGET || "http://127.0.0.1:4274";
   const workspace = env.AI_NATIVE_OS_WORKSPACE || "~/AI-Native-OS";
   const bridgePython = env.R_BRIDGE_PYTHON || resolve(root, ".venv/bin/python");
   const bridgeScript = env.R_BRIDGE_SCRIPT || resolve(root, "scripts/r_bridge.py");
@@ -128,6 +129,32 @@ async function buildHealth(env: Record<string, string>, root: string) {
       label: "LM Studio",
       state: "offline",
       detail: `Not reachable at ${lmStudioBaseUrl}`,
+    });
+  }
+
+  try {
+    const response = await withTimeout(`${eveTarget.replace(/\/$/, "")}/eve/v1/health`);
+    let detail = `${response.status} ${response.statusText}`;
+    if (response.ok) {
+      try {
+        const data = (await response.json()) as { ok?: boolean };
+        detail = data.ok === false ? "Eve health returned ok=false" : `Reachable at ${eveTarget}`;
+      } catch {
+        detail = `Reachable at ${eveTarget}`;
+      }
+    }
+    checks.push({
+      key: "eve",
+      label: "Eve backend",
+      state: response.ok ? "ready" : "warning",
+      detail,
+    });
+  } catch {
+    checks.push({
+      key: "eve",
+      label: "Eve backend",
+      state: "warning",
+      detail: `Not reachable at ${eveTarget}. Run npm run start:local or set VITE_EVE_TARGET.`,
     });
   }
 
@@ -266,7 +293,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         "/eve": {
-          target: env.VITE_EVE_TARGET || "http://127.0.0.1:3000",
+          target: env.VITE_EVE_TARGET || "http://127.0.0.1:4274",
           changeOrigin: true,
         },
       },

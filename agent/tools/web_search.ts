@@ -33,7 +33,7 @@ type SearchOutput = {
 
 export default defineTool({
   description:
-    "Search the current web and return normalized source cards. Use it for news, recent facts, links, prices, current documentation, or anything that may have changed. For serious answers, read the best sources with fetch_page before writing the final response.",
+    "Search the current web and return normalized source cards. Use it for news, recent facts, links, prices, current documentation, or anything that may have changed. In the compact local profile, use this as the default web tool and clearly state when deeper page reading is needed.",
   inputSchema: z.object({
     query: z.string().min(2).describe("Web search query."),
     maxResults: z.number().int().min(1).max(8).default(5).describe("Maximum number of results."),
@@ -76,8 +76,8 @@ function searchOutput(query: string, provider: string, results: SearchResult[]):
     quality,
     note:
       quality === "fallback"
-        ? "Fallback search only. Read sources with fetch_page and treat missing results as weak evidence."
-        : "Read the strongest sources with fetch_page before writing cited answers.",
+        ? "Fallback search only. Treat missing or thin results as weak evidence."
+        : "Use the strongest source cards and include links. For deeper page reading, enable the optional research tool pack.",
     results,
   };
 }

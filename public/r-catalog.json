@@ -6,7 +6,6 @@
     "bluetooth",
     "clipboard",
     "docker",
-    "email",
     "gpio",
     "power",
     "realtime_voice",
@@ -1090,7 +1089,7 @@
           }
         }
       ],
-      "blocked": true,
+      "blocked": false,
       "toolCount": 3
     },
     {

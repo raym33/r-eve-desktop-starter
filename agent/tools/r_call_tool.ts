@@ -1,7 +1,8 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { runRBridge } from "../lib/rBridge.js";
 import { isGuardedTool } from "../lib/guardedTools.js";
+import { duplicateToolCallGuard } from "../lib/localToolGuard.js";
+import { runRBridge } from "../lib/rBridge.js";
 
 export default defineTool({
   description:
@@ -14,7 +15,11 @@ export default defineTool({
   // Real human-in-the-loop gate: for outward or irreversible tools, Eve pauses
   // and asks the user to approve before this tool runs. The model cannot skip it.
   needsApproval: ({ toolInput }) => isGuardedTool(toolInput?.skill, toolInput?.tool),
-  async execute({ skill, tool, params }) {
+  async execute({ skill, tool, params }, ctx) {
+    const duplicate = duplicateToolCallGuard(ctx, "r_call_tool", { params, skill, tool });
+    if (duplicate) {
+      return duplicate;
+    }
     const args = ["call", skill, tool, "--params", JSON.stringify(params)];
     // Reaching execute for a guarded tool means the user already approved via the
     // Eve approval prompt, so confirm the bridge-level gate too (avoids a double
@@ -22,6 +27,17 @@ export default defineTool({
     if (isGuardedTool(skill, tool)) {
       args.push("--confirm");
     }
-    return runRBridge(args);
+    const result = await runRBridge(args);
+    return {
+      ...result,
+      answerGuidance:
+        "The requested R tool has already run. Do not repeat the same tool call unless the user changes the input. Explain the result now.",
+    };
+  },
+  toModelOutput(output) {
+    return {
+      type: "json",
+      value: output,
+    };
   },
 });

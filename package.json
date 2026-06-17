@@ -1,5 +1,5 @@
 {
-  "name": "starter-eve-lmstudio-web",
+  "name": "ainativeos",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
@@ -10,14 +10,20 @@
   "scripts": {
     "build": "eve build",
     "dev": "eve dev",
+    "doctor:eve": "node scripts/smoke_eve.mjs",
+    "doctor:lmstudio": "node scripts/smoke_lmstudio.mjs",
     "web": "vite --host 127.0.0.1",
+    "web:local": "VITE_EVE_TARGET=${VITE_EVE_TARGET:-http://127.0.0.1:4274} vite --host 127.0.0.1",
     "web:docker": "vite --host 0.0.0.0",
     "web:build": "vite build",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up",
     "r:install": "python3 -m venv .venv && .venv/bin/pip install -e ./r",
     "r:catalog": ".venv/bin/python scripts/r_bridge.py export-catalog --output public/r-catalog.json",
+    "setup:home": "git submodule update --init --recursive && npm install && npm run r:install && .venv/bin/pip install pytest && npm run r:catalog",
     "start": "eve start",
+    "start:local": "eve start --host 127.0.0.1 --port ${EVE_PORT:-4274}",
+    "test:python": ".venv/bin/python -m pytest scripts/test_confirmation_gate.py scripts/test_workspace.py",
     "typecheck": "tsgo"
   },
   "dependencies": {

@@ -23,7 +23,7 @@ cp .env.docker.example .env
 4. Set the model id:
 
 ```bash
-LM_STUDIO_MODEL=your-local-model-id
+LM_STUDIO_MODEL=qwen2.5-7b-instruct
 DOCKER_LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1
 ```
 
@@ -54,7 +54,7 @@ This is safer than running every dependency directly on the host, but it is not 
 
 ## Notes
 
-- Ports: `5173` for the UI and `3000` for Eve.
+- Ports: `5173` for the UI and `4274` for Eve.
 - Skill Forge drafts are written to `./skill-drafts`.
 - Docker-specific host URLs use the `DOCKER_` prefix so they do not conflict with local-mode values like `http://127.0.0.1:1234/v1`.
 - Web search providers can be passed through `.env`; use `DOCKER_SEARXNG_URL` for a host SearXNG instance.
@@ -70,8 +70,8 @@ npm install
 npm run r:install
 npm run r:catalog
 npm run build
-npm run start
-npm run web
+npm run start:local
+npm run web:local
 ```
 
 Use Docker mode when you want stronger dependency isolation or a cleaner demo environment.

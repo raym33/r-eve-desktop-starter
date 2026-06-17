@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { readPage } from "../lib/webResearch.js";
+import { readPage } from "../../agent/lib/webResearch.js";
 import { runWebSearch } from "./web_search.js";
 
 const Source = z.object({

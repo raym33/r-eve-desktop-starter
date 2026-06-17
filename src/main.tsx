@@ -112,14 +112,14 @@ const WORKFLOWS: Array<{ icon: LucideIcon } & LocalizedEntry> = [
       description: "Search, read sources, compare, and summarize.",
       hint: "Search the web and return source-backed notes.",
       prompt:
-        "Do a short web research pass on recent LM Studio updates. Use web_research, read the best sources, and return a concise summary with citations and links.",
+        "Search the web for recent LM Studio updates. Use web_search, return the best source cards with links, and clearly say if deeper page reading should be enabled.",
     },
     es: {
       title: "Investigacion web",
       description: "Busca, lee fuentes, compara y resume.",
       hint: "Busca en la web y devuelve notas respaldadas por fuentes.",
       prompt:
-        "Haz una breve investigacion web sobre actualizaciones recientes de LM Studio. Usa web_research, lee las mejores fuentes y devuelve un resumen conciso con citas y enlaces.",
+        "Busca en la web actualizaciones recientes de LM Studio. Usa web_search, devuelve las mejores fuentes con enlaces y di claramente si conviene activar lectura profunda.",
     },
   },
   {
@@ -180,14 +180,14 @@ const WORKFLOWS: Array<{ icon: LucideIcon } & LocalizedEntry> = [
       description: "Email drafts and WhatsApp reply drafts with approval gates.",
       hint: "Check experimental connectors before reading or creating drafts.",
       prompt:
-        "Check the experimental email and WhatsApp connector status. If email is configured, explain what can be read or drafted safely. If WhatsApp is configured, explain the local draft flow. Do not send anything.",
+        "Explain that email and WhatsApp connectors are optional tool packs. Describe the safe draft-only workflow and say they must be enabled before use. Do not send anything.",
     },
     es: {
       title: "Comunicacion",
       description: "Borradores de email y WhatsApp con aprobacion humana.",
       hint: "Comprueba los conectores experimentales antes de leer o crear borradores.",
       prompt:
-        "Comprueba el estado de los conectores experimentales de email y WhatsApp. Si email esta configurado, explica que se puede leer o preparar con seguridad. Si WhatsApp esta configurado, explica el flujo de borradores locales. No envies nada.",
+        "Explica que los conectores de email y WhatsApp son packs opcionales. Describe el flujo seguro de borradores y di que deben activarse antes de usarlos. No envies nada.",
     },
   },
   {
@@ -223,7 +223,7 @@ const SKILL_FORGE_ACTION: LocalizedEntry = {
       "When no existing R tool fits, draft a new skill package with schema, tests, permissions, and an approval checklist.",
     hint: "Search first, then generate a reviewable draft skill. Nothing is installed automatically.",
     prompt:
-      "I need a capability that may not exist yet. First search the R catalog for a good existing fit. If there is no good fit, explain the gap and ask me for the exact workflow. Then use skill_forge to create a safe draft skill package with permissions, tests, and approval notes. Do not install or execute generated code.",
+      "I need a capability that may not exist yet. First search the R catalog for a good existing fit. If there is no good fit, explain the gap, ask me for the exact workflow, and tell me Skill Forge is an optional pack that must be enabled before generating a draft. Do not install or execute generated code.",
   },
   es: {
     title: "Forjar una habilidad que falta",
@@ -231,7 +231,7 @@ const SKILL_FORGE_ACTION: LocalizedEntry = {
       "Cuando ninguna herramienta R existente encaje, redacta un nuevo paquete de habilidad con esquema, pruebas, permisos y una lista de aprobacion.",
     hint: "Busca primero y luego genera un borrador de habilidad revisable. Nada se instala automaticamente.",
     prompt:
-      "Necesito una capacidad que quiza no exista todavia. Primero busca en el catalogo R una opcion existente que encaje bien. Si no hay una buena opcion, explica la carencia y pideme el flujo de trabajo exacto. Luego usa skill_forge para crear un paquete de habilidad en borrador seguro con permisos, pruebas y notas de aprobacion. No instales ni ejecutes codigo generado.",
+      "Necesito una capacidad que quiza no exista todavia. Primero busca en el catalogo R una opcion existente que encaje bien. Si no hay una buena opcion, explica la carencia, pideme el flujo exacto y dime que Skill Forge es un pack opcional que debe activarse antes de generar borradores. No instales ni ejecutes codigo generado.",
   },
 };
 
@@ -348,14 +348,14 @@ const RESEARCH_WORKFLOWS: Array<{ mode: string } & LocalizedEntry> = [
       description: "Find and read the top sources, then answer with links.",
       hint: "Best for current facts, product updates, and news checks.",
       prompt:
-        "Run web_research for this question: What changed recently in local AI desktop apps? Read the top 3 sources, then write a concise brief with citations and links.",
+        "Use web_search for this question: What changed recently in local AI desktop apps? Return the best source cards with links and a concise brief.",
     },
     es: {
       title: "Resumen rapido",
       description: "Encuentra y lee las mejores fuentes, luego responde con enlaces.",
       hint: "Ideal para hechos actuales, novedades de producto y noticias.",
       prompt:
-        "Ejecuta web_research para esta pregunta: Que ha cambiado recientemente en las apps de IA local de escritorio? Lee las 3 mejores fuentes y escribe un resumen conciso con citas y enlaces.",
+        "Usa web_search para esta pregunta: Que ha cambiado recientemente en las apps de IA local de escritorio? Devuelve las mejores fuentes con enlaces y un resumen conciso.",
     },
   },
   {
@@ -365,14 +365,14 @@ const RESEARCH_WORKFLOWS: Array<{ mode: string } & LocalizedEntry> = [
       description: "Collect more candidates, read several sources, and compare evidence.",
       hint: "Use this when the answer needs stronger source quality.",
       prompt:
-        "Run a deeper web_research pass. Ask me for the exact research question if needed, collect up to 8 results, read the top 5, compare the evidence, and clearly mark weak or missing sources.",
+        "Explain that deep research is an optional tool pack. Ask me for the exact research question and offer to enable the research pack, or do a compact web_search pass now.",
     },
     es: {
       title: "Investigacion profunda",
       description: "Reune mas candidatos, lee varias fuentes y compara evidencia.",
       hint: "Usalo cuando la respuesta necesite fuentes mas solidas.",
       prompt:
-        "Ejecuta una investigacion web_research mas profunda. Pideme la pregunta exacta si hace falta, recoge hasta 8 resultados, lee los 5 mejores, compara la evidencia y marca claramente fuentes debiles o ausentes.",
+        "Explica que la investigacion profunda es un pack opcional. Pideme la pregunta exacta y ofrece activar el pack de research, o hacer ahora una busqueda compacta con web_search.",
     },
   },
   {
@@ -382,14 +382,14 @@ const RESEARCH_WORKFLOWS: Array<{ mode: string } & LocalizedEntry> = [
       description: "Turn research into a Markdown file in the workspace.",
       hint: "Use after a research pass to keep sources and summary.",
       prompt:
-        "I want to save a research note. If we already have research results, use save_research_note with the summary and sources. If not, ask me for the research question, run web_research first, then save a Markdown note in the workspace.",
+        "Explain that saved research notes use the optional research pack. Offer to enable it, or provide a compact web_search summary I can copy for now.",
     },
     es: {
       title: "Guardar nota",
       description: "Convierte la investigacion en un Markdown dentro del workspace.",
       hint: "Usalo despues de investigar para conservar fuentes y resumen.",
       prompt:
-        "Quiero guardar una nota de investigacion. Si ya tenemos resultados, usa save_research_note con el resumen y las fuentes. Si no, pideme la pregunta, ejecuta web_research primero y luego guarda una nota Markdown en el workspace.",
+        "Explica que guardar notas de investigacion usa el pack opcional de research. Ofrece activarlo, o da por ahora un resumen compacto con web_search que pueda copiar.",
     },
   },
   {
@@ -399,14 +399,14 @@ const RESEARCH_WORKFLOWS: Array<{ mode: string } & LocalizedEntry> = [
       description: "Search inside a chosen domain and read the actual pages.",
       hint: "Useful for newspapers, docs, government sites, and vendors.",
       prompt:
-        "I want to research a specific website. Ask me for the domain and question, then run web_research with a site: query, read the strongest pages, and answer with citations.",
+        "Ask me for the domain and question, then use web_search with a site: query. Include links and say if deeper page reading should be enabled.",
     },
     es: {
       title: "Sitio concreto",
       description: "Busca dentro de un dominio elegido y lee las paginas reales.",
       hint: "Util para periodicos, docs, webs publicas y proveedores.",
       prompt:
-        "Quiero investigar una web concreta. Pideme el dominio y la pregunta, luego ejecuta web_research con una consulta site:, lee las paginas mas solidas y responde con citas.",
+        "Pideme el dominio y la pregunta, luego usa web_search con una consulta site:. Incluye enlaces y di si conviene activar lectura profunda.",
     },
   },
 ];
@@ -1345,14 +1345,14 @@ function buildResearchExportPrompt(id: string, formats: Array<"pdf" | "txt">, la
       "Exporta esta nota de investigacion guardada.",
       `Archivo: ${id}`,
       `Formatos: ${formats.join(", ")}`,
-      "Usa export_research_note y dime las rutas de salida.",
+      "Explica que exportar notas requiere activar el pack opcional de research.",
     ].join("\n");
   }
   return [
     "Export this saved research note.",
     `File: ${id}`,
     `Formats: ${formats.join(", ")}`,
-    "Use export_research_note and tell me the output paths.",
+    "Explain that exporting notes requires enabling the optional research pack.",
   ].join("\n");
 }
 
