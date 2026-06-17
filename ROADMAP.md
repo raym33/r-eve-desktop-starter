@@ -11,6 +11,7 @@ R Workbench is a local-first automation console for personal computers. The road
 - Permission summary and blocked sensitive skills.
 - Session tool history.
 - Guided PDF workbench.
+- Skill Forge draft generator.
 
 Status: implemented in this starter.
 
@@ -23,6 +24,15 @@ Status: implemented in this starter.
 - OCR language presets.
 - Batch PDF actions.
 - Run receipts with input paths, output paths, tool name, and timestamp.
+
+## Phase 2.5: Skill Forge
+
+- Detect missing capabilities after catalog search.
+- Generate draft skill packages under `skill-drafts/`.
+- Include manifest, code skeleton, tests, and approval checklist.
+- Classify permissions before implementation.
+- Require human approval before installation.
+- Add reusable templates for document, web, file, data, and code skills.
 
 ## Phase 3: Research Workflows
 
@@ -53,5 +63,6 @@ Status: implemented in this starter.
 - Minimal by default, inspectable when needed.
 - Buttons describe actions; tooltips explain consequences.
 - Never hide tool execution from the user.
+- Never install generated skills automatically.
 - Preserve original files unless explicitly told otherwise.
 - Keep the model context focused by searching tools instead of loading every capability.

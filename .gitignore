@@ -13,3 +13,7 @@ node_modules
 dist
 .DS_Store
 *.tsbuildinfo
+__pycache__
+*.pyc
+skill-drafts/*
+!skill-drafts/README.md

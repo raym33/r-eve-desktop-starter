@@ -4,11 +4,11 @@ import { runRBridge } from "../lib/rBridge.js";
 
 export default defineTool({
   description:
-    "Ejecuta una tool concreta del proyecto raym33/r. Primero usa r_search_tools o r_catalog si no sabes el esquema exacto.",
+    "Execute one specific tool from the raym33/r project. Use r_search_tools or r_catalog first when the exact schema is unknown.",
   inputSchema: z.object({
-    skill: z.string().describe("Nombre de la skill de R, por ejemplo math, json, rss, pdf, git."),
-    tool: z.string().describe("Nombre de la tool dentro de esa skill."),
-    params: z.record(z.string(), z.unknown()).default({}).describe("Argumentos JSON para la tool."),
+    skill: z.string().describe("R skill name, for example math, json, rss, pdf, git."),
+    tool: z.string().describe("Tool name inside that skill."),
+    params: z.record(z.string(), z.unknown()).default({}).describe("JSON arguments for the tool."),
   }),
   async execute({ skill, tool, params }) {
     return runRBridge(["call", skill, tool, "--params", JSON.stringify(params)]);

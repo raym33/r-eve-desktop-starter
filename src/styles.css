@@ -83,6 +83,7 @@ h3 {
 .settings-block,
 .permission-panel,
 .tool-event,
+.forge-panel,
 .pdf-workbench,
 .workflow-card,
 .system-strip div,
@@ -502,6 +503,54 @@ h3 {
   font-weight: 700;
 }
 
+.forge-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+}
+
+.forge-panel > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.forge-panel svg {
+  color: #3e6f64;
+  flex: 0 0 auto;
+}
+
+.forge-panel p {
+  color: #66717b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.forge-button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  border: 1px solid #cdd6d1;
+  border-radius: 8px;
+  background: #f5f8f6;
+  color: #173d34;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.forge-button:hover:not(:disabled) {
+  border-color: #3e6f64;
+  background: #e9f3ef;
+}
+
+.forge-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .pdf-workbench {
   display: grid;
   gap: 12px;
@@ -806,6 +855,15 @@ h3 {
   .pdf-action-grid,
   .workflow-grid {
     grid-template-columns: 1fr;
+  }
+
+  .forge-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .forge-button {
+    width: 100%;
   }
 
   .tooltip-control::after {

@@ -19,6 +19,7 @@ R Workbench should not feel like another chat window. It should feel like a loca
 3. Local files: organize folders, detect duplicates, rename, and convert.
 4. Data: CSV, JSON, YAML, lightweight SQL, and small statistics.
 5. Code: inspect repositories, explain errors, use git, and generate patches.
+6. Skill Forge: draft missing skills when the catalog has no good fit.
 
 ## PDF Vertical
 
@@ -38,6 +39,7 @@ UX rules: ask for paths before execution, never overwrite originals by default, 
 - Local UI: primary experience for non-technical users.
 - Agent runtime: Eve or an equivalent layer with sessions, streaming, and tools.
 - Skill router: never load all tools into the model; search relevant tools and execute one exact tool.
+- Skill Forge: generate draft skill packages only after catalog search fails.
 - Permission layer: block sensitive capabilities by default and surface permission state visually.
 - Model adapters: LM Studio, Ollama, OpenAI-compatible endpoints, and optional external APIs.
 
@@ -68,12 +70,14 @@ Ideal permissions:
 4. Session tool execution history.
 5. Guided PDF workbench.
 6. Minimal responsive English UI with button tooltips.
+7. Skill Forge draft generation for missing capabilities.
 
 ## Next Product Steps
 
 1. Persistent results, favorites, and exports.
-2. Firecrawl as the primary web extraction path.
-3. Browser-use as an advanced interactive browsing tool.
-4. Per-agent permission profiles.
-5. File picker and scoped workspace folders.
-6. Local run receipts for audit and replay.
+2. Skill Forge implementation templates for common categories.
+3. Firecrawl as the primary web extraction path.
+4. Browser-use as an advanced interactive browsing tool.
+5. Per-agent permission profiles.
+6. File picker and scoped workspace folders.
+7. Local run receipts for audit and replay.

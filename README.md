@@ -11,6 +11,7 @@ The goal is to feel less like a generic chat app and more like a small operating
 - Web search through SearXNG, Brave, Tavily, or DuckDuckGo Instant Answer fallback.
 - `raym33/r` bridge with catalog search and targeted tool execution.
 - Guided PDF workbench for OCR, summaries, merging, page extraction, repair, and report generation.
+- Skill Forge for drafting missing R skills when no existing tool fits.
 - Permission panel that shows ready and blocked skill families.
 - Session tool history for auditability.
 - Minimal responsive UI with button tooltips.
@@ -117,6 +118,26 @@ The first screen includes guided document actions:
 - rotate or compress documents.
 
 Each action asks for paths and options before running `r_call_tool`. The recommended workflow is to create a new output file and preserve originals.
+
+## Skill Forge
+
+Skill Forge is the safe self-extension path:
+
+```text
+request -> search existing tools -> explain the gap -> draft skill -> review -> test -> approve -> install
+```
+
+When the agent cannot find a suitable R skill, it can call `skill_forge` to create a reviewable draft under `skill-drafts/<name>/`.
+
+Drafts include:
+
+- `manifest.json` with status, request, related existing tools, and permission profile;
+- `skill.py` with a conservative R skill skeleton;
+- `tests/test_skill.py` proving the draft is not executable before implementation;
+- `APPROVAL.md` with a human review checklist;
+- `README.md` with the original request and review flow.
+
+Drafts are ignored by git by default and are never installed or executed automatically.
 
 ## Safety
 

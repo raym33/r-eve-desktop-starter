@@ -98,6 +98,15 @@ const TRUST_POINTS = [
   "Source-backed web research",
 ];
 
+const SKILL_FORGE_ACTION = {
+  title: "Forge a missing skill",
+  description:
+    "When no existing R tool fits, draft a new skill package with schema, tests, permissions, and an approval checklist.",
+  hint: "Search first, then generate a reviewable draft skill. Nothing is installed automatically.",
+  prompt:
+    "I need a capability that may not exist yet. First search the R catalog for a good existing fit. If there is no good fit, explain the gap and ask me for the exact workflow. Then use skill_forge to create a safe draft skill package with permissions, tests, and approval notes. Do not install or execute generated code.",
+};
+
 const PDF_WORKFLOWS = [
   {
     title: "Summarize",
@@ -320,6 +329,26 @@ function App() {
                   <strong>{permissionSummary?.blockedCount ?? "--"}</strong>
                   <span>blocked by default</span>
                 </div>
+              </section>
+
+              <section className="forge-panel" aria-label="Skill Forge">
+                <div>
+                  <Sparkles size={18} />
+                  <div>
+                    <h3>Skill Forge</h3>
+                    <p>{SKILL_FORGE_ACTION.description}</p>
+                  </div>
+                </div>
+                <button
+                  className="forge-button tooltip-control"
+                  data-tooltip={SKILL_FORGE_ACTION.hint}
+                  disabled={agent.status !== "ready"}
+                  onClick={() => sendMessage(SKILL_FORGE_ACTION.prompt)}
+                  title={SKILL_FORGE_ACTION.hint}
+                  type="button"
+                >
+                  {SKILL_FORGE_ACTION.title}
+                </button>
               </section>
 
               <section className="pdf-workbench" aria-label="PDF workbench">
