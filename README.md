@@ -24,6 +24,21 @@ The goal is to feel less like a generic chat app and more like a small operating
 - Python virtual environment created by the setup flow.
 - Optional: SearXNG, Brave Search API key, or Tavily API key for stronger web search.
 
+## Clone
+
+This repository embeds `raym33/r` as a git submodule at `./r`.
+
+```bash
+git clone --recurse-submodules https://github.com/raym33/r-eve-desktop-starter.git
+cd r-eve-desktop-starter
+```
+
+If you already cloned without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Configure LM Studio
 
 1. Open LM Studio.
@@ -41,6 +56,9 @@ Copy the model `id` into `.env`.
 
 ```bash
 cp .env.example .env
+npm install
+npm run r:install
+npm run r:catalog
 ```
 
 Edit:
@@ -94,7 +112,11 @@ This starter includes a bridge to `raym33/r`:
 - `r_search_tools`: searches tools by keyword.
 - `r_call_tool`: executes one specific tool.
 
-The R repository is cloned at `../work/raym33-r` and installed editable inside `.venv`.
+The R repository lives inside this repo at `./r` as a submodule and is installed editable inside `.venv` with:
+
+```bash
+npm run r:install
+```
 
 The UI loads `public/r-catalog.json` to display a visual skill and tool explorer. It also shows a permission panel with ready skills and sensitive blocked families.
 

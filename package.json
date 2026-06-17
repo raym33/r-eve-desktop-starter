@@ -12,6 +12,7 @@
     "dev": "eve dev",
     "web": "vite --host 127.0.0.1",
     "web:build": "vite build",
+    "r:install": "python3 -m venv .venv && .venv/bin/pip install -e ./r",
     "r:catalog": ".venv/bin/python scripts/r_bridge.py export-catalog --output public/r-catalog.json",
     "start": "eve start",
     "typecheck": "tsgo"

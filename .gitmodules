@@ -1,0 +1,3 @@
+[submodule "r"]
+	path = r
+	url = https://github.com/raym33/r.git
