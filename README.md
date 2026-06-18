@@ -10,8 +10,11 @@ AI Native OS is the local-first, permission-aware layer on top of Eve, LM Studio
 
 ## What can it do?
 
-- Summarize a folder of PDFs into a report.
-- Turn scanned PDFs into searchable PDFs.
+- Ask for anything in plain language on a clean, single-input first screen — the assistant tells you if it can do it, what it needs, and asks before anything important.
+- Open a retro **"OS" desktop** (Windows 3.11 style) and click icons to start common tasks, with a built-in file explorer.
+- Summarize a folder of PDFs into a report, or turn scanned PDFs into searchable PDFs.
+- Extract fields from Spanish invoices and official documents (NIF/CIF/NIE, IBAN, euro amounts, dates, invoice numbers, fiscal forms).
+- Browse your workspace files and act on them (summarize a PDF, pull invoice data) right from the explorer.
 - Search the web with a compact local web tool.
 - Enable optional packs for deep research notes, Spanish legal sources, Skill Forge, email drafts, and WhatsApp drafts.
 - Organize local files safely, preserving the originals.
@@ -21,6 +24,10 @@ The UI is bilingual (Spanish / English) with a language toggle.
 
 ## Features
 
+- Two faces, one app: a clean chat-first welcome screen for new users, and an optional retro **"OS" desktop** with clickable program icons and a file explorer for people who prefer a point-and-click surface.
+- Capability registry (`src/osApps.ts`): every function the desktop exposes is one entry, so adding a future skill is one line and nothing gets lost.
+- Read-only **file explorer** confined to the workspace (`/api/files`), remembers the last folder, and can hand a file to the assistant (summarize, extract invoice data).
+- Spanish document field extractor (`extract_spanish_fields`) for NIF/CIF, IBAN, amounts, dates, invoice numbers, and fiscal forms.
 - Local model routing through LM Studio's OpenAI-compatible server.
 - Eve agent runtime with streaming and tool calls.
 - Confirmation gate + human-in-the-loop approval before outward or irreversible actions (e.g. sending email).
@@ -32,9 +39,8 @@ The UI is bilingual (Spanish / English) with a language toggle.
 - Guided PDF workbench for OCR, summaries, merging, page extraction, repair, and report generation.
 - Optional Skill Forge pack with a reviewed draft → approve → install pipeline.
 - Optional experimental secure communication pack for Gmail/Microsoft 365 drafts and WhatsApp Business Cloud API workflows.
-- Permission panel that shows ready and blocked skill families.
-- Session tool history for auditability.
-- Setup status checks for LM Studio, the selected model, the R catalog, the R bridge, Lexia, search, and workspace mode.
+- Run receipts: every executed tool call is logged to `<workspace>/Receipts` and `Logs/receipts.jsonl` for auditability.
+- Local setup health endpoint (`/api/health`) covering LM Studio, the selected model, the R catalog, the R bridge, Lexia, search, and workspace mode; `npm run doctor` runs the full stack diagnostic.
 - Minimal, responsive, bilingual UI with button tooltips.
 - Optional Docker runtime for isolating Node, Eve, Python, and R dependencies.
 
@@ -246,16 +252,27 @@ Quick check:
 .venv/bin/python scripts/r_bridge.py call math calculate --params '{"expression":"sqrt(144)"}'
 ```
 
+## The OS desktop
+
+The sidebar has an **OS** button. It opens a Windows 3.11-style "Program Manager" overlay designed for non-technical users: a grid of labelled icons you click to start a task, draggable windows, a taskbar (with an Exit button, a Programs button, one button per open window, and a live clock), and minimize/restore.
+
+- The icons come from a single capability registry, `src/osApps.ts` — one entry per function. Adding a future skill is one line; it then appears on the desktop automatically, so functions never get lost.
+- Most icons hand a plain-language request to the assistant (which still applies the confirmation gate and guardrails) and return you to the chat.
+- The **File Explorer** is its own window: a read-only listing of your workspace, confined to it (path traversal is rejected), served by `/api/files`. It remembers the last folder across sessions. Select a file to reveal actions — Ask about it, Summarize a PDF, or pull Invoice data — which send the file's path to the assistant.
+
+Icons are original pixel-art SVGs (`src/osIcons.tsx`); no third-party icon assets are bundled.
+
 ## PDF Workbench
 
-The first screen includes guided document actions:
+Guided document actions are available from the OS desktop icons or by simply asking:
 
 - summarize PDFs with text extraction or OCR;
 - convert scanned PDFs into searchable PDFs;
 - merge multiple PDFs;
 - extract pages or ranges;
 - generate PDF reports from text or Markdown;
-- rotate or compress documents.
+- rotate or compress documents;
+- extract fields from Spanish invoices and documents with `extract_spanish_fields`.
 
 Each action asks for paths and options before running `r_call_tool`. The recommended workflow is to create a new output file and preserve originals.
 

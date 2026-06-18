@@ -23,11 +23,12 @@ Status: implemented in this starter.
 
 - Workspace folder (`~/AI-Native-OS` with Inbox/Outputs/Reports/OCR/Receipts/Drafts/Logs) created on demand; `workspace-info` reports it. Opt-in `R_BRIDGE_WORKSPACE_ONLY` keeps file paths inside the workspace (plus `R_BRIDGE_WORKSPACE_ALLOW` dirs). **Implemented.**
 - Run receipts: every executed tool call writes a JSON receipt to `<workspace>/Receipts` and appends to `Logs/receipts.jsonl` (tool, params, paths, status, timestamp, approved). **Implemented.**
-- File picker with scoped folders.
-- Drag-and-drop PDF intake.
+- File explorer confined to the workspace (`/api/files`), remembers the last folder, and offers per-file actions (Ask / Summarize / Invoice data). **Implemented (v1).**
+- Spanish document field extractor (`extract_spanish_fields`): NIF/CIF/NIE, IBAN, amounts, dates, invoice numbers, fiscal forms. **Implemented.**
 - Result previews for generated PDFs.
 - OCR language presets.
 - Batch PDF actions.
+- Drag-and-drop PDF intake.
 
 ## Phase 2.5: Skill Forge
 
@@ -71,6 +72,13 @@ Status: implemented in this starter.
 - OAuth setup UI and token vault.
 - Incoming WhatsApp webhook receiver and conversation inbox.
 - Per-contact allowlists and communication audit timeline.
+
+## Phase 4.7: Everyday Surfaces
+
+- Clean chat-first welcome screen with a plain-language entry. **Implemented.**
+- Retro "OS" desktop: a Windows 3.11-style Program Manager with clickable program icons (from the `src/osApps.ts` capability registry), original pixel-art icons, draggable windows, minimize/restore, a taskbar with a live clock, and the embedded File Explorer. One registry entry = one icon, so functions never get lost. **Implemented (v1).**
+- Desktop icons on the background and a Start menu.
+- Window previews / file previews in the explorer.
 
 ## Phase 5: Power User Surface
 
