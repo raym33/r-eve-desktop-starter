@@ -7,9 +7,10 @@ import {
   ShieldAlert,
   Square,
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { type Lang, loadLang, saveLang, t } from "./i18n.js";
+import { OS_ICONS } from "./osIcons.js";
 import { OS_APPS, type OsApp } from "./osApps.js";
 import "./styles.css";
 
@@ -225,6 +226,15 @@ type FileListing = {
 };
 
 const EXPLORER_PATH_KEY = "ainativeos.explorer.path";
+type OsWindowId = "programs" | "explorer";
+type OsWindowState = { id: OsWindowId; z: number; x: number; y: number };
+
+const WINDOW_TITLES: Record<OsWindowId, Record<Lang, string>> = {
+  programs: { es: "Programas", en: "Programs" },
+  explorer: { es: "Explorador", en: "Explorer" },
+};
+
+const INITIAL_WINDOWS: OsWindowState[] = [{ id: "programs", z: 1, x: 22, y: 22 }];
 
 function OsDesktop({
   lang,
@@ -235,55 +245,185 @@ function OsDesktop({
   onClose: () => void;
   onLaunch: (app: OsApp) => void;
 }) {
-  const [explorerOpen, setExplorerOpen] = useState(false);
+  const [windows, setWindows] = useState<OsWindowState[]>(INITIAL_WINDOWS);
+  const [zCounter, setZCounter] = useState(2);
+  const [clock, setClock] = useState(() => formatClock());
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(formatClock()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  function nextZ() {
+    const z = zCounter;
+    setZCounter((current) => current + 1);
+    return z;
+  }
+
+  function openWindow(id: OsWindowId) {
+    const z = nextZ();
+    setWindows((current) => {
+      const existing = current.find((windowState) => windowState.id === id);
+      if (existing) {
+        return current.map((windowState) => windowState.id === id ? { ...windowState, z } : windowState);
+      }
+      const position = id === "explorer" ? { x: 88, y: 76 } : { x: 22, y: 22 };
+      return [...current, { id, z, ...position }];
+    });
+  }
+
+  function focusWindow(id: OsWindowId) {
+    const z = nextZ();
+    setWindows((current) => current.map((windowState) => windowState.id === id ? { ...windowState, z } : windowState));
+  }
+
+  function closeWindow(id: OsWindowId) {
+    setWindows((current) => current.filter((windowState) => windowState.id !== id));
+  }
+
+  function moveWindow(id: OsWindowId, x: number, y: number) {
+    setWindows((current) => current.map((windowState) => windowState.id === id ? { ...windowState, x, y } : windowState));
+  }
+
+  function startDrag(event: ReactPointerEvent<HTMLElement>, windowState: OsWindowState) {
+    if ((event.target as HTMLElement).closest(".os-close")) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    focusWindow(windowState.id);
+    const overlay = overlayRef.current;
+    const frame = event.currentTarget.closest(".os-window");
+    if (!overlay || !(frame instanceof HTMLElement)) {
+      return;
+    }
+    const overlayRect = overlay.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
+    const titlebarHeight = event.currentTarget.getBoundingClientRect().height;
+    const offsetX = event.clientX - frameRect.left;
+    const offsetY = event.clientY - frameRect.top;
+
+    function onPointerMove(moveEvent: PointerEvent) {
+      const maxX = Math.max(0, overlayRect.width - 80);
+      const maxY = Math.max(0, overlayRect.height - 40 - titlebarHeight);
+      const nextX = clamp(moveEvent.clientX - overlayRect.left - offsetX, 0, maxX);
+      const nextY = clamp(moveEvent.clientY - overlayRect.top - offsetY, 0, maxY);
+      moveWindow(windowState.id, nextX, nextY);
+    }
+
+    function stopDrag() {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", stopDrag);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", stopDrag);
+  }
 
   function launch(app: OsApp) {
     if (app.kind === "explorer") {
-      setExplorerOpen(true);
+      openWindow("explorer");
       return;
     }
     onLaunch(app);
   }
 
   return (
-    <div className="os-overlay" role="dialog" aria-modal="true" aria-label={t(lang, "os.title")}>
-      <section className="os-window os-program-manager">
-        <div className="os-titlebar">
-          <span>{t(lang, "os.title")}</span>
-          <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
-            ✕
-          </button>
-        </div>
-        <div className="os-window-body">
-          <p className="os-hint">{t(lang, "os.hint")}</p>
-          <div className="os-icon-grid">
-            {OS_APPS.map((app) => {
-              const Icon = app.icon;
-              return (
-                <button
-                  className="os-icon"
-                  key={app.id}
-                  onClick={() => launch(app)}
-                  onDoubleClick={() => launch(app)}
-                  type="button"
-                >
-                  <span className="os-icon-tile">
-                    <Icon size={30} strokeWidth={1.8} />
-                  </span>
-                  <span className="os-icon-label">{app.label[lang]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+    <div className="os-overlay" ref={overlayRef} role="dialog" aria-modal="true" aria-label={t(lang, "os.title")}>
+      <div className="os-desktop-area">
+        {windows.map((windowState) => {
+          const style = { left: windowState.x, top: windowState.y, zIndex: windowState.z };
+          if (windowState.id === "programs") {
+            return (
+              <section
+                className="os-window os-program-manager"
+                key={windowState.id}
+                onPointerDown={() => focusWindow(windowState.id)}
+                style={style}
+              >
+                <div className="os-titlebar" onPointerDown={(event) => startDrag(event, windowState)}>
+                  <span>{t(lang, "os.title")}</span>
+                  <button className="os-close" onClick={() => closeWindow("programs")} type="button" aria-label={t(lang, "os.close")}>
+                    ✕
+                  </button>
+                </div>
+                <div className="os-window-body">
+                  <p className="os-hint">{t(lang, "os.hint")}</p>
+                  <div className="os-icon-grid">
+                    {OS_APPS.map((app) => {
+                      const Icon = OS_ICONS[app.iconId] ?? OS_ICONS.document;
+                      return (
+                        <button
+                          className="os-icon"
+                          key={app.id}
+                          onClick={() => launch(app)}
+                          type="button"
+                        >
+                          <span className="os-icon-tile">
+                            <Icon size={32} />
+                          </span>
+                          <span className="os-icon-label">{app.label[lang]}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
+            );
+          }
 
-      {explorerOpen ? <FileExplorer lang={lang} onClose={() => setExplorerOpen(false)} /> : null}
+          return (
+            <FileExplorer
+              key={windowState.id}
+              lang={lang}
+              onClose={() => closeWindow("explorer")}
+              onFocus={() => focusWindow("explorer")}
+              onTitlebarPointerDown={(event) => startDrag(event, windowState)}
+              style={style}
+            />
+          );
+        })}
+      </div>
+
+      <div className="os-taskbar">
+        <button className="os-exit" onClick={onClose} type="button">
+          {t(lang, "os.exit")}
+        </button>
+        <div className="os-task-buttons">
+          {getTaskbarWindowIds(windows).map((id) => {
+            const isOpen = windows.some((windowState) => windowState.id === id);
+            return (
+              <button
+                className={`os-task-button ${isOpen ? "open" : ""}`}
+                key={id}
+                onClick={() => openWindow(id)}
+                type="button"
+              >
+                {WINDOW_TITLES[id][lang]}
+              </button>
+            );
+          })}
+        </div>
+        <div className="os-clock" aria-label={t(lang, "os.clock")}>{clock}</div>
+      </div>
     </div>
   );
 }
 
-function FileExplorer({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+function FileExplorer({
+  lang,
+  onClose,
+  onFocus,
+  onTitlebarPointerDown,
+  style,
+}: {
+  lang: Lang;
+  onClose: () => void;
+  onFocus: () => void;
+  onTitlebarPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
+  style: CSSProperties;
+}) {
   const [currentPath, setCurrentPath] = useState(() => readStoredExplorerPath());
   const [listing, setListing] = useState<FileListing | null>(null);
   const [loading, setLoading] = useState(false);
@@ -323,8 +463,8 @@ function FileExplorer({ lang, onClose }: { lang: Lang; onClose: () => void }) {
   const visibleEntries = listing?.entries ?? [];
 
   return (
-    <section className="os-window os-explorer">
-      <div className="os-titlebar">
+    <section className="os-window os-explorer" onPointerDown={onFocus} style={style}>
+      <div className="os-titlebar" onPointerDown={onTitlebarPointerDown}>
         <span>{t(lang, "os.explorer.title")}</span>
         <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
           ✕
@@ -392,6 +532,22 @@ function FileExplorer({ lang, onClose }: { lang: Lang; onClose: () => void }) {
       </div>
     </section>
   );
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatClock() {
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+}
+
+function getTaskbarWindowIds(windows: OsWindowState[]): OsWindowId[] {
+  const ids = new Set<OsWindowId>(["programs"]);
+  for (const windowState of windows) {
+    ids.add(windowState.id);
+  }
+  return [...ids];
 }
 
 function readStoredExplorerPath() {

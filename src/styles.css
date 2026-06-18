@@ -1556,13 +1556,20 @@ h3 {
   position: fixed;
   z-index: 1000;
   inset: 0;
-  overflow: auto;
+  overflow: hidden;
   background: #008080;
-  padding: 22px;
   font-family: "MS Sans Serif", "Pixelated MS Sans Serif", Tahoma, sans-serif;
 }
 
+.os-desktop-area {
+  position: absolute;
+  inset: 0 0 38px 0;
+  overflow: hidden;
+  padding: 22px;
+}
+
 .os-window {
+  position: absolute;
   border-style: solid;
   border-width: 2px;
   border-color: #ffffff #000000 #000000 #ffffff;
@@ -1572,7 +1579,7 @@ h3 {
 }
 
 .os-program-manager {
-  width: min(720px, 100%);
+  width: min(720px, calc(100vw - 44px));
 }
 
 .os-titlebar {
@@ -1587,6 +1594,8 @@ h3 {
   padding: 2px 3px 2px 7px;
   font-size: 12px;
   font-weight: 800;
+  cursor: move;
+  user-select: none;
 }
 
 .os-titlebar span {
@@ -1604,6 +1613,7 @@ h3 {
   height: 18px;
   padding: 0;
   line-height: 1;
+  cursor: default;
 }
 
 .os-window-body {
@@ -1638,7 +1648,9 @@ h3 {
 
 .os-icon:hover,
 .os-icon:focus-visible {
+  background: #000080;
   border-color: #000000;
+  color: #ffffff;
   outline: 1px dotted #ffffff;
   outline-offset: -3px;
 }
@@ -1657,6 +1669,12 @@ h3 {
   color: #000080;
 }
 
+.os-icon:hover .os-icon-tile,
+.os-icon:focus-visible .os-icon-tile {
+  border-color: #ffffff #000000 #000000 #ffffff;
+  background: #c0c0c0;
+}
+
 .os-icon-label {
   max-width: 86px;
   font-size: 11px;
@@ -1666,8 +1684,90 @@ h3 {
 
 .os-explorer {
   width: min(780px, calc(100% - 44px));
-  margin-top: 18px;
-  margin-left: min(80px, 8vw);
+}
+
+.os-taskbar {
+  position: fixed;
+  z-index: 3000;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  border-style: solid;
+  border-width: 2px 0 0;
+  border-color: #ffffff;
+  background: #c0c0c0;
+  box-shadow: inset 0 1px 0 #dfdfdf;
+  padding: 3px 6px;
+}
+
+.os-exit,
+.os-task-button,
+.os-clock {
+  min-height: 24px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.os-exit,
+.os-task-button {
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ffffff #000000 #000000 #ffffff;
+  background: #c0c0c0;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #808080;
+  color: #000000;
+  padding: 2px 11px;
+}
+
+.os-exit {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.os-task-buttons {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.os-task-button {
+  flex: 0 1 170px;
+  min-width: 90px;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.os-task-button.open {
+  background: #dfdfdf;
+}
+
+.os-exit:active,
+.os-task-button:active {
+  border-color: #404040 #ffffff #ffffff #404040;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+
+.os-clock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 72px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #808080 #ffffff #ffffff #808080;
+  background: #dfdfdf;
+  color: #000000;
+  padding: 2px 8px;
+  text-align: center;
 }
 
 .explorer-toolbar {
@@ -1795,13 +1895,13 @@ h3 {
 }
 
 @media (max-width: 760px) {
-  .os-overlay {
+  .os-desktop-area {
     padding: 12px;
   }
 
+  .os-program-manager,
   .os-explorer {
-    width: 100%;
-    margin-left: 0;
+    width: calc(100vw - 24px);
   }
 
   .explorer-toolbar {

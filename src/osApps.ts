@@ -1,19 +1,8 @@
-import {
-  FileText,
-  FolderKanban,
-  FolderOpen,
-  Globe,
-  Mail,
-  Receipt,
-  Scale,
-  Stethoscope,
-  type LucideIcon,
-} from "lucide-react";
 import type { Lang } from "./i18n.js";
 
 export type OsApp = {
   id: string;
-  icon: LucideIcon;
+  iconId: string;
   label: Record<Lang, string>;
   kind: "prompt" | "explorer";
   prompt?: Record<Lang, string>;
@@ -22,7 +11,7 @@ export type OsApp = {
 export const OS_APPS: OsApp[] = [
   {
     id: "summarize-pdf",
-    icon: FileText,
+    iconId: "document",
     label: { es: "Resume un PDF", en: "Summarize a PDF" },
     kind: "prompt",
     prompt: {
@@ -32,7 +21,7 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "draft-email",
-    icon: Mail,
+    iconId: "email",
     label: { es: "Redacta un email", en: "Draft an email" },
     kind: "prompt",
     prompt: {
@@ -42,7 +31,7 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "boe-law",
-    icon: Scale,
+    iconId: "law",
     label: { es: "Consulta una ley (BOE)", en: "Look up a law (BOE)" },
     kind: "prompt",
     prompt: {
@@ -52,7 +41,7 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "web-research",
-    icon: Globe,
+    iconId: "web",
     label: { es: "Investiga en la web", en: "Research the web" },
     kind: "prompt",
     prompt: {
@@ -62,7 +51,7 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "organize-files",
-    icon: FolderKanban,
+    iconId: "files",
     label: { es: "Ordena archivos", en: "Organize files" },
     kind: "prompt",
     prompt: {
@@ -72,7 +61,7 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "spanish-invoice",
-    icon: Receipt,
+    iconId: "invoice",
     label: { es: "Datos de una factura", en: "Invoice data" },
     kind: "prompt",
     prompt: {
@@ -82,18 +71,58 @@ export const OS_APPS: OsApp[] = [
   },
   {
     id: "file-explorer",
-    icon: FolderOpen,
+    iconId: "explorer",
     label: { es: "Explorador de archivos", en: "File Explorer" },
     kind: "explorer",
   },
   {
     id: "diagnostics",
-    icon: Stethoscope,
+    iconId: "diagnostics",
     label: { es: "Comprobar el sistema", en: "Check the system" },
     kind: "prompt",
     prompt: {
       es: "Comprueba que esta listo en mi sistema (LM Studio, modelo, herramientas) y dime que falta.",
       en: "Check what is ready on my system (LM Studio, model, tools) and tell me what is missing.",
+    },
+  },
+  {
+    id: "calendar",
+    iconId: "calendar",
+    label: { es: "Agenda y tareas", en: "Calendar and tasks" },
+    kind: "prompt",
+    prompt: {
+      es: "Quiero gestionar mi agenda y tareas. Preguntame que evento o tarea quiero anadir o consultar.",
+      en: "I want to manage my calendar and tasks. Ask me what event or task I want to add or look up.",
+    },
+  },
+  {
+    id: "clients",
+    iconId: "clients",
+    label: { es: "Mis clientes", en: "My clients" },
+    kind: "prompt",
+    prompt: {
+      es: "Quiero llevar un registro sencillo de mis clientes (una base de datos local). Preguntame que quiero guardar o consultar.",
+      en: "I want to keep a simple record of my clients (a local database). Ask me what I want to save or look up.",
+    },
+  },
+  {
+    id: "email",
+    iconId: "email",
+    label: { es: "Email", en: "Email" },
+    kind: "prompt",
+    prompt: {
+      es: "Quiero trabajar con email. Si el conector esta desactivado, explicame que es un pack opcional y como activarlo; si no, ayudame a redactar y no envies nada sin mi aprobacion.",
+      en: "I want to work with email. If the connector is disabled, explain that it is an optional pack and how to enable it; otherwise, help me draft and do not send anything without my approval.",
+    },
+  },
+  {
+    id: "whatsapp",
+    iconId: "whatsapp",
+    label: { es: "WhatsApp", en: "WhatsApp" },
+    kind: "prompt",
+    prompt: {
+      es: "Quiero usar WhatsApp. Explicame que es un conector opcional y experimental; prepara una respuesta como borrador local y no envies nada sin mi aprobacion.",
+      en: "I want to use WhatsApp. Explain that it is an optional and experimental connector; prepare a reply as a local draft and do not send anything without my approval.",
     },
   },
 ];
