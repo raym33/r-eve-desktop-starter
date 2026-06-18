@@ -28,7 +28,7 @@
     "start:docker": "eve start --host 0.0.0.0 --port ${EVE_PORT:-4274}",
     "start:local": "eve start --host 127.0.0.1 --port ${EVE_PORT:-4274}",
     "test": "npm run typecheck && npm run test:python && npm run test:r",
-    "test:python": ".venv/bin/python -m pytest scripts/test_confirmation_gate.py scripts/test_install_pipeline.py scripts/test_workspace.py",
+    "test:python": ".venv/bin/python -m pytest scripts/test_confirmation_gate.py scripts/test_install_pipeline.py scripts/test_workspace.py scripts/test_locale_es.py",
     "test:r": ".venv/bin/python -m pytest r/tests/test_skills.py -q",
     "typecheck": "tsgo"
   },

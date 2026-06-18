@@ -347,6 +347,15 @@ def cmd_search(args: argparse.Namespace) -> None:
     _json_out({"query": args.query, "matches": matches[: args.limit]})
 
 
+def cmd_extract_es_fields(args: argparse.Namespace) -> None:
+    scripts_dir = Path(__file__).resolve().parent
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+    from locale_es import extract_spanish_fields
+
+    _json_out({"ok": True, "fields": extract_spanish_fields(args.text)})
+
+
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9]+", "_", value.strip().lower()).strip("_")
     slug = re.sub(r"_+", "_", slug)
@@ -900,6 +909,10 @@ def main() -> int:
     search.add_argument("query")
     search.add_argument("--limit", type=int, default=20)
     search.set_defaults(func=cmd_search)
+
+    extract_es_fields = subparsers.add_parser("extract-es-fields")
+    extract_es_fields.add_argument("--text", required=True)
+    extract_es_fields.set_defaults(func=cmd_extract_es_fields)
 
     call = subparsers.add_parser("call")
     call.add_argument("skill")
