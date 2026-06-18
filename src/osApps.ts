@@ -5,6 +5,7 @@ export type OsApp = {
   iconId: string;
   label: Record<Lang, string>;
   kind: "prompt" | "explorer";
+  onDesktop?: boolean;
   prompt?: Record<Lang, string>;
 };
 
@@ -14,6 +15,7 @@ export const OS_APPS: OsApp[] = [
     iconId: "document",
     label: { es: "Resume un PDF", en: "Summarize a PDF" },
     kind: "prompt",
+    onDesktop: true,
     prompt: {
       es: "Quiero resumir un PDF. Pideme la ruta del archivo y dime que necesitas.",
       en: "I want to summarize a PDF. Ask me for the file path and tell me what you need.",
@@ -24,6 +26,7 @@ export const OS_APPS: OsApp[] = [
     iconId: "email",
     label: { es: "Redacta un email", en: "Draft an email" },
     kind: "prompt",
+    onDesktop: true,
     prompt: {
       es: "Quiero redactar un email. Preguntame el destinatario y que quiero decir. No lo envies sin mi aprobacion.",
       en: "I want to draft an email. Ask me for the recipient and what I want to say. Do not send it without my approval.",
@@ -34,6 +37,7 @@ export const OS_APPS: OsApp[] = [
     iconId: "law",
     label: { es: "Consulta una ley (BOE)", en: "Look up a law (BOE)" },
     kind: "prompt",
+    onDesktop: true,
     prompt: {
       es: "Quiero consultar una ley espanola en el BOE. Preguntame el nombre o el identificador BOE-A.",
       en: "I want to look up a Spanish law in the BOE. Ask me for the name or BOE-A identifier.",
@@ -74,12 +78,14 @@ export const OS_APPS: OsApp[] = [
     iconId: "explorer",
     label: { es: "Explorador de archivos", en: "File Explorer" },
     kind: "explorer",
+    onDesktop: true,
   },
   {
     id: "diagnostics",
     iconId: "diagnostics",
     label: { es: "Comprobar el sistema", en: "Check the system" },
     kind: "prompt",
+    onDesktop: true,
     prompt: {
       es: "Comprueba que esta listo en mi sistema (LM Studio, modelo, herramientas) y dime que falta.",
       en: "Check what is ready on my system (LM Studio, model, tools) and tell me what is missing.",
@@ -100,6 +106,7 @@ export const OS_APPS: OsApp[] = [
     iconId: "clients",
     label: { es: "Mis clientes", en: "My clients" },
     kind: "prompt",
+    onDesktop: true,
     prompt: {
       es: "Quiero llevar un registro sencillo de mis clientes (una base de datos local). Preguntame que quiero guardar o consultar.",
       en: "I want to keep a simple record of my clients (a local database). Ask me what I want to save or look up.",

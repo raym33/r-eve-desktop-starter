@@ -238,7 +238,7 @@ const WINDOW_TITLES: Record<OsWindowId, Record<Lang, string>> = {
   explorer: { es: "Explorador", en: "Explorer" },
 };
 
-const INITIAL_WINDOWS: OsWindowState[] = [{ id: "programs", z: 1, x: 22, y: 22, minimized: false }];
+const INITIAL_WINDOWS: OsWindowState[] = [{ id: "programs", z: 1, x: 116, y: 28, minimized: false }];
 
 function OsDesktop({
   lang,
@@ -254,7 +254,9 @@ function OsDesktop({
   const [windows, setWindows] = useState<OsWindowState[]>(INITIAL_WINDOWS);
   const [zCounter, setZCounter] = useState(2);
   const [clock, setClock] = useState(() => formatClock());
+  const [startOpen, setStartOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const desktopApps = useMemo(() => OS_APPS.filter((app) => app.onDesktop), []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(formatClock()), 60_000);
@@ -274,7 +276,7 @@ function OsDesktop({
       if (existing) {
         return current.map((windowState) => windowState.id === id ? { ...windowState, minimized: false, z } : windowState);
       }
-      const position = id === "explorer" ? { x: 88, y: 76 } : { x: 22, y: 22 };
+      const position = id === "explorer" ? { x: 132, y: 84 } : { x: 116, y: 28 };
       return [...current, { id, z, minimized: false, ...position }];
     });
   }
@@ -354,6 +356,7 @@ function OsDesktop({
   }
 
   function launch(app: OsApp) {
+    setStartOpen(false);
     if (app.kind === "explorer") {
       openWindow("explorer");
       return;
@@ -362,8 +365,37 @@ function OsDesktop({
   }
 
   return (
-    <div className="os-overlay" ref={overlayRef} role="dialog" aria-modal="true" aria-label={t(lang, "os.title")}>
+    <div
+      className="os-overlay"
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t(lang, "os.title")}
+      onPointerDown={(event) => {
+        if (!(event.target as HTMLElement).closest(".os-start, .os-start-menu")) {
+          setStartOpen(false);
+        }
+      }}
+    >
       <div className="os-desktop-area">
+        <div className="os-desktop-icons" aria-label={t(lang, "os.programs")}>
+          {desktopApps.map((app) => {
+            const Icon = OS_ICONS[app.iconId] ?? OS_ICONS.document;
+            return (
+              <button
+                className="os-desktop-icon"
+                key={app.id}
+                onClick={() => launch(app)}
+                type="button"
+              >
+                <span className="os-desktop-icon-art">
+                  <Icon size={32} />
+                </span>
+                <span>{app.label[lang]}</span>
+              </button>
+            );
+          })}
+        </div>
         {windows.map((windowState) => {
           if (windowState.minimized) {
             return null;
@@ -428,9 +460,66 @@ function OsDesktop({
         })}
       </div>
 
+      {startOpen ? (
+        <div className="os-start-menu" role="menu" aria-label={t(lang, "os.start")}>
+          {OS_APPS.map((app) => {
+            const Icon = OS_ICONS[app.iconId] ?? OS_ICONS.document;
+            return (
+              <button
+                className="os-start-menu-row"
+                key={app.id}
+                onClick={() => launch(app)}
+                role="menuitem"
+                type="button"
+              >
+                <Icon size={24} />
+                <span>{app.label[lang]}</span>
+              </button>
+            );
+          })}
+          <div className="os-start-menu-separator" role="separator" />
+          <button
+            className="os-start-menu-row"
+            onClick={() => {
+              openWindow("programs");
+              setStartOpen(false);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            {(() => {
+              const Icon = OS_ICONS.files;
+              return <Icon size={24} />;
+            })()}
+            <span>{t(lang, "os.programs")}</span>
+          </button>
+          <div className="os-start-menu-separator" role="separator" />
+          <button
+            className="os-start-menu-row os-start-menu-exit"
+            onClick={onClose}
+            role="menuitem"
+            type="button"
+          >
+            <span className="os-start-exit-glyph" aria-hidden="true">X</span>
+            <span>{t(lang, "os.exit")}</span>
+          </button>
+        </div>
+      ) : null}
+
       <div className="os-taskbar">
-        <button className="os-exit" onClick={onClose} type="button">
-          {t(lang, "os.exit")}
+        <button
+          className={`os-start ${startOpen ? "active" : ""}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            setStartOpen((open) => !open);
+          }}
+          type="button"
+        >
+          {(() => {
+            const Icon = OS_ICONS.files;
+            return <Icon size={18} />;
+          })()}
+          <span>{t(lang, "os.start")}</span>
         </button>
         <div className="os-task-buttons">
           {getTaskbarWindowIds(windows).map((id) => {
