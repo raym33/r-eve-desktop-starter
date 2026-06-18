@@ -7,15 +7,17 @@ import {
   ShieldAlert,
   Square,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type Lang, loadLang, saveLang, t } from "./i18n.js";
+import { OS_APPS, type OsApp } from "./osApps.js";
 import "./styles.css";
 
 function App() {
   const agent = useEveAgent({ host: "" });
   const [lang, setLang] = useState<Lang>(loadLang);
   const [input, setInput] = useState("");
+  const [osOpen, setOsOpen] = useState(false);
 
   const messages = agent.data.messages ?? [];
 
@@ -65,6 +67,10 @@ function App() {
           <h1>AI Native OS</h1>
           <span>{t(lang, "brand.subtitle")}</span>
         </div>
+
+        <button className="os-launch" onClick={() => setOsOpen(true)} type="button">
+          {t(lang, "os.launch")}
+        </button>
 
         <div className="lang-toggle" aria-label={t(lang, "aria.langToggle")}>
           {(["es", "en"] as const).map((option) => (
@@ -186,8 +192,224 @@ function App() {
           )}
         </form>
       </section>
+
+      {osOpen ? (
+        <OsDesktop
+          lang={lang}
+          onClose={() => setOsOpen(false)}
+          onLaunch={(app) => {
+            if (app.kind === "prompt" && app.prompt) {
+              void sendMessage(app.prompt[lang]);
+              setOsOpen(false);
+            }
+          }}
+        />
+      ) : null}
     </main>
   );
+}
+
+type FileEntry = {
+  name: string;
+  type: "dir" | "file";
+  size: number;
+  modifiedAt: string;
+};
+
+type FileListing = {
+  root: string;
+  path: string;
+  parent: string | null;
+  entries: FileEntry[];
+  error?: string;
+};
+
+const EXPLORER_PATH_KEY = "ainativeos.explorer.path";
+
+function OsDesktop({
+  lang,
+  onClose,
+  onLaunch,
+}: {
+  lang: Lang;
+  onClose: () => void;
+  onLaunch: (app: OsApp) => void;
+}) {
+  const [explorerOpen, setExplorerOpen] = useState(false);
+
+  function launch(app: OsApp) {
+    if (app.kind === "explorer") {
+      setExplorerOpen(true);
+      return;
+    }
+    onLaunch(app);
+  }
+
+  return (
+    <div className="os-overlay" role="dialog" aria-modal="true" aria-label={t(lang, "os.title")}>
+      <section className="os-window os-program-manager">
+        <div className="os-titlebar">
+          <span>{t(lang, "os.title")}</span>
+          <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
+            ✕
+          </button>
+        </div>
+        <div className="os-window-body">
+          <p className="os-hint">{t(lang, "os.hint")}</p>
+          <div className="os-icon-grid">
+            {OS_APPS.map((app) => {
+              const Icon = app.icon;
+              return (
+                <button
+                  className="os-icon"
+                  key={app.id}
+                  onClick={() => launch(app)}
+                  onDoubleClick={() => launch(app)}
+                  type="button"
+                >
+                  <span className="os-icon-tile">
+                    <Icon size={30} strokeWidth={1.8} />
+                  </span>
+                  <span className="os-icon-label">{app.label[lang]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {explorerOpen ? <FileExplorer lang={lang} onClose={() => setExplorerOpen(false)} /> : null}
+    </div>
+  );
+}
+
+function FileExplorer({ lang, onClose }: { lang: Lang; onClose: () => void }) {
+  const [currentPath, setCurrentPath] = useState(() => readStoredExplorerPath());
+  const [listing, setListing] = useState<FileListing | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(EXPLORER_PATH_KEY, currentPath);
+    } catch {
+      // Keep the explorer usable even when browser storage is unavailable.
+    }
+    const controller = new AbortController();
+    setLoading(true);
+    fetch(`/api/files?path=${encodeURIComponent(currentPath)}`, { signal: controller.signal })
+      .then((response) => response.json() as Promise<FileListing>)
+      .then(setListing)
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setListing({
+            root: "",
+            path: currentPath,
+            parent: null,
+            entries: [],
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [currentPath]);
+
+  const pathParts = currentPath ? currentPath.split("/").filter(Boolean) : [];
+  const visibleEntries = listing?.entries ?? [];
+
+  return (
+    <section className="os-window os-explorer">
+      <div className="os-titlebar">
+        <span>{t(lang, "os.explorer.title")}</span>
+        <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
+          ✕
+        </button>
+      </div>
+      <div className="os-window-body">
+        <div className="explorer-toolbar">
+          <button
+            className="os-raised-button"
+            disabled={!listing?.parent && currentPath === ""}
+            onClick={() => setCurrentPath(listing?.parent ?? "")}
+            type="button"
+          >
+            {t(lang, "os.explorer.up")}
+          </button>
+          <div className="explorer-path" aria-label={t(lang, "os.explorer.title")}>
+            <button type="button" onClick={() => setCurrentPath("")}>
+              {t(lang, "os.explorer.root")}
+            </button>
+            {pathParts.map((part, index) => {
+              const nextPath = pathParts.slice(0, index + 1).join("/");
+              return (
+                <button key={nextPath} type="button" onClick={() => setCurrentPath(nextPath)}>
+                  {part}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="explorer-root">
+          {t(lang, "os.explorer.root")}: {listing?.root || "..."}
+        </p>
+        {listing?.error ? <div className="explorer-error">{listing.error}</div> : null}
+
+        <div className="explorer-list" role="list" aria-busy={loading}>
+          {visibleEntries.length === 0 ? (
+            <div className="explorer-empty">{loading ? "..." : t(lang, "os.explorer.empty")}</div>
+          ) : (
+            visibleEntries.map((entry) => (
+              <button
+                className={`explorer-row ${entry.type}`}
+                disabled={entry.type !== "dir"}
+                key={`${entry.type}:${entry.name}`}
+                onDoubleClick={() => {
+                  if (entry.type === "dir") {
+                    setCurrentPath([currentPath, entry.name].filter(Boolean).join("/"));
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (entry.type === "dir" && event.key === "Enter") {
+                    setCurrentPath([currentPath, entry.name].filter(Boolean).join("/"));
+                  }
+                }}
+                role="listitem"
+                type="button"
+              >
+                <span>{entry.type === "dir" ? "[DIR]" : "[FILE]"}</span>
+                <strong>{entry.name}</strong>
+                <em>{entry.type === "dir" ? "" : formatBytes(entry.size)}</em>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function readStoredExplorerPath() {
+  try {
+    return localStorage.getItem(EXPLORER_PATH_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function ChatMessage({ lang, message }: { lang: Lang; message: EveMessage }) {

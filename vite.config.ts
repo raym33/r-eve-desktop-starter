@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readdir, readFile, stat } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
 type HealthState = "ready" | "warning" | "offline" | "info";
 
@@ -83,6 +83,61 @@ async function readResearchNote(env: Record<string, string>, id: string) {
     path,
     title: titleFromMarkdown(markdown, safeId),
   };
+}
+
+async function listWorkspaceFiles(env: Record<string, string>, requestedPath: string) {
+  const root = await ensureWorkspace(env);
+  const resolvedRoot = resolve(root);
+  const resolvedPath = resolve(resolvedRoot, requestedPath || ".");
+  const insideRoot = resolvedPath === resolvedRoot || resolvedPath.startsWith(`${resolvedRoot}${sep}`);
+  const relativePath = relative(resolvedRoot, resolvedPath);
+  const displayPath = relativePath === "" ? "" : relativePath;
+  const parent = displayPath === "" ? null : dirname(displayPath) === "." ? "" : dirname(displayPath);
+
+  if (!insideRoot) {
+    const error = "Path escapes the workspace root.";
+    return {
+      status: 400,
+      payload: { root: resolvedRoot, path: displayPath, parent: null, entries: [], error },
+    };
+  }
+
+  try {
+    const entries = await Promise.all(
+      (await readdir(resolvedPath, { withFileTypes: true })).map(async (entry) => {
+        const info = await stat(join(resolvedPath, entry.name));
+        return {
+          name: entry.name,
+          type: entry.isDirectory() ? "dir" : "file",
+          size: info.size,
+          modifiedAt: info.mtime.toISOString(),
+        };
+      }),
+    );
+
+    entries.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === "dir" ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    });
+
+    return {
+      status: 200,
+      payload: { root: resolvedRoot, path: displayPath, parent, entries },
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      payload: {
+        root: resolvedRoot,
+        path: displayPath,
+        parent: null,
+        entries: [],
+        error: error instanceof Error ? error.message : String(error),
+      },
+    };
+  }
 }
 
 function titleFromMarkdown(markdown: string, fallback: string) {
@@ -285,6 +340,11 @@ export default defineConfig(({ mode }) => {
                 error: error instanceof Error ? error.message : String(error),
               });
             }
+          });
+          server.middlewares.use("/api/files", async (req, res) => {
+            const url = new URL(req.url || "/", "http://127.0.0.1");
+            const result = await listWorkspaceFiles(env, url.searchParams.get("path") ?? "");
+            json(res, result.status, result.payload);
           });
         },
       },
