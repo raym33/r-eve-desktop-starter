@@ -1051,12 +1051,15 @@ function IntentChecker({
                 <div className="intent-need">
                   <span>{t(lang, "intent.setupNeeded")}</span>
                   <ul>
-                    {missing.map((key) => (
-                      <li key={key}>
-                        {checkFor(key)?.label ?? key}
-                        {checkFor(key)?.detail ? <em> — {checkFor(key)?.detail}</em> : null}
-                      </li>
-                    ))}
+                    {missing.map((key) => {
+                      const check = checkFor(key);
+                      return (
+                        <li key={key}>
+                          {check ? localizedHealthLabel(check.label, lang) : key}
+                          {check ? <em> — {localizedHealthDetail(check, lang)}</em> : null}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ) : null}
@@ -1658,6 +1661,15 @@ function localizedHealthLabel(label: string, lang: Lang) {
 function localizedHealthDetail(check: HealthCheck, lang: Lang) {
   if (check.key === "lexia" && check.state === "info") {
     return t(lang, "health.detail.lexiaOptional");
+  }
+  if (check.key === "lmstudio" && check.state === "offline") {
+    return t(lang, "health.detail.lmOffline");
+  }
+  if (check.key === "lmstudio" && check.detail.includes("not found")) {
+    return t(lang, "health.detail.lmModelMissing");
+  }
+  if (check.key === "eve" && check.state !== "ready") {
+    return t(lang, "health.detail.eveOffline");
   }
   if (check.key === "search" && check.detail === "DuckDuckGo fallback only") {
     return t(lang, "health.detail.searchFallback");
