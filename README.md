@@ -74,6 +74,14 @@ curl http://127.0.0.1:1234/v1/models
 
 Copy the model `id` into `.env`.
 
+**Recommended models.** AI Native OS relies on reliable tool calling, so pick a model that supports it well. Good local options:
+
+- `qwen2.5-7b-instruct` — small, fast, dependable tool calling. A good default.
+- `qwen3.5-9b` or a larger Qwen — stronger reasoning if your machine can run it.
+- Any LM Studio / Ollama-compatible model with solid function-calling support.
+
+After starting LM Studio, verify the whole stack at once with `npm run doctor` (see [Diagnostics](#diagnostics)).
+
 ## Configure The App
 
 ```bash
@@ -291,6 +299,28 @@ Two layers protect the user:
 - **Confirmation gate + approval.** Outward-facing or irreversible tools (such as `email.send_email`, social posts, and HTTP writes) are *guarded*: they never run automatically. The agent shows a plain-language preview and the app requires an explicit Approve / Cancel before anything is sent. The guarded set is additive and cannot be weakened by configuration.
 
 Generated Skill Forge skills are never installed or executed automatically — they go through a reviewed approve → install pipeline. Originals are preserved by default.
+
+## Diagnostics
+
+Check that everything is wired up with one command:
+
+```bash
+npm run doctor
+```
+
+It runs three groups and prints a readable summary:
+
+- **R bridge** (offline): catalog, workspace, math, JSON, file write, PDF generate, PDF info, OCR languages, and the workspace guardrail. Run on its own with `npm run doctor:r`.
+- **Eve backend**: needs `npm run start`. Run on its own with `npm run doctor:eve`.
+- **LM Studio**: needs the local server running. Run on its own with `npm run doctor:lmstudio`.
+
+`npm run doctor` exits non-zero if any check fails, so it also works as a CI gate. For the test suites:
+
+```bash
+npm test            # typecheck + Python bridge tests + R skill tests
+npm run test:python # bridge tests only (scripts/)
+npm run test:r      # R skill tests (r/tests/test_skills.py)
+```
 
 ## Documentation
 
