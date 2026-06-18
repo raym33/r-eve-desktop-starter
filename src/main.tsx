@@ -21,6 +21,7 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type Lang, loadLang, saveLang, t } from "./i18n.js";
+import { assessCapability, type Capability, matchCapabilities } from "./capabilities.js";
 import "./styles.css";
 
 type RTool = {
@@ -679,6 +680,14 @@ function App() {
                 <p>{t(lang, "dashboard.copy")}</p>
               </header>
 
+              <IntentChecker
+                agentStatus={agent.status}
+                health={health}
+                lang={lang}
+                onAsk={(text) => sendMessage(text)}
+                onRunDiagnostics={refreshHealth}
+              />
+
               <section className="system-strip" aria-label={t(lang, "aria.systemCapabilities")}>
                 <div>
                   <strong>{catalog?.skillCount ?? "--"}</strong>
@@ -916,6 +925,160 @@ function ChatMessage({ lang, message }: { lang: Lang; message: EveMessage }) {
       <div className="message-role">{message.role === "user" ? t(lang, "user.you") : "Eve"}</div>
       <div className="message-body">{text}</div>
     </article>
+  );
+}
+
+const INTENT_EXAMPLES: Record<Lang, string>[] = [
+  { es: "Resume estos PDFs", en: "Summarize these PDFs" },
+  { es: "Redacta un email a un cliente", en: "Draft an email to a client" },
+  { es: "Consulta una ley en el BOE", en: "Look up a Spanish law (BOE)" },
+  { es: "Busca en la web y resume", en: "Search the web and summarize" },
+  { es: "Ordena mis archivos", en: "Organize my files" },
+];
+
+function IntentChecker({
+  agentStatus,
+  health,
+  lang,
+  onAsk,
+  onRunDiagnostics,
+}: {
+  agentStatus: string;
+  health: HealthStatus | null;
+  lang: Lang;
+  onAsk: (text: string) => void;
+  onRunDiagnostics: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [submitted, setSubmitted] = useState("");
+
+  // A capability requirement is met only when its health check is "ready".
+  // "info" means optional-but-not-running (e.g. Lexia offline), which does not
+  // satisfy a capability that actually needs that service.
+  const readyKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const check of health?.checks ?? []) {
+      if (check.state === "ready") {
+        set.add(check.key);
+      }
+    }
+    return set;
+  }, [health]);
+
+  const matches = useMemo(() => (submitted ? matchCapabilities(submitted) : []), [submitted]);
+  const busy = agentStatus === "submitted" || agentStatus === "streaming";
+
+  function check(value: string) {
+    const next = value.trim();
+    setText(next);
+    setSubmitted(next);
+  }
+
+  const checkFor = (key: string) => health?.checks.find((entry) => entry.key === key);
+
+  return (
+    <section className="intent-checker" aria-label={t(lang, "intent.title")}>
+      <form
+        className="intent-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          check(text);
+        }}
+      >
+        <label className="intent-label" htmlFor="intent-input">
+          {t(lang, "intent.title")}
+        </label>
+        <div className="intent-row">
+          <input
+            className="intent-input"
+            id="intent-input"
+            onChange={(event) => setText(event.target.value)}
+            placeholder={t(lang, "intent.placeholder")}
+            value={text}
+          />
+          <button className="intent-check" disabled={!text.trim()} type="submit">
+            {t(lang, "intent.check")}
+          </button>
+        </div>
+      </form>
+
+      <div className="intent-examples">
+        <span>{t(lang, "intent.examplesLabel")}</span>
+        {INTENT_EXAMPLES.map((example) => (
+          <button className="intent-chip" key={example.en} onClick={() => check(example[lang])} type="button">
+            {example[lang]}
+          </button>
+        ))}
+      </div>
+
+      {submitted && matches.length === 0 ? (
+        <div className="intent-card unknown">
+          <div className="intent-verdict">
+            <ShieldAlert size={16} />
+            <strong>{t(lang, "intent.verdict.unknown")}</strong>
+          </div>
+          <p className="intent-how">{t(lang, "intent.unknownHelp")}</p>
+          <div className="intent-actions">
+            <button className="intent-ask" disabled={busy} onClick={() => onAsk(submitted)} type="button">
+              {t(lang, "intent.ask")}
+            </button>
+            <button className="intent-diag" onClick={onRunDiagnostics} type="button">
+              {t(lang, "intent.diagnostics")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {matches.map((capability: Capability) => {
+        const { verdict, missing } = assessCapability(capability, readyKeys);
+        const copy = capability.copy[lang];
+        return (
+          <div className={`intent-card ${verdict}`} key={capability.id}>
+            <div className="intent-verdict">
+              {verdict === "ready" ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
+              <strong>{copy.title}</strong>
+              <span className={`intent-badge ${verdict}`}>
+                {verdict === "ready" ? t(lang, "intent.verdict.ready") : t(lang, "intent.verdict.setup")}
+              </span>
+            </div>
+            <p className="intent-how">{copy.what}</p>
+            <div className="intent-meta">
+              <div className="intent-need">
+                <span>{t(lang, "intent.youProvide")}</span>
+                <p>{copy.provide}</p>
+              </div>
+              {missing.length > 0 ? (
+                <div className="intent-need">
+                  <span>{t(lang, "intent.setupNeeded")}</span>
+                  <ul>
+                    {missing.map((key) => (
+                      <li key={key}>
+                        {checkFor(key)?.label ?? key}
+                        {checkFor(key)?.detail ? <em> — {checkFor(key)?.detail}</em> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <p className="intent-guard">
+                <ShieldCheck size={13} />{" "}
+                {t(lang, capability.guarded ? "intent.guardrail.approval" : "intent.guardrail.general")}
+              </p>
+            </div>
+            <div className="intent-actions">
+              <button className="intent-ask" disabled={busy} onClick={() => onAsk(submitted)} type="button">
+                {t(lang, "intent.ask")}
+              </button>
+              {missing.length > 0 ? (
+                <button className="intent-diag" onClick={onRunDiagnostics} type="button">
+                  {t(lang, "intent.diagnostics")}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 
