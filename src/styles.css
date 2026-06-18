@@ -1526,7 +1526,8 @@ h3 {
 
 .os-launch,
 .os-raised-button,
-.os-close {
+.os-close,
+.os-min {
   border-style: solid;
   border-width: 2px;
   border-color: #ffffff #404040 #404040 #ffffff;
@@ -1547,7 +1548,8 @@ h3 {
 
 .os-launch:active,
 .os-raised-button:active,
-.os-close:active {
+.os-close:active,
+.os-min:active {
   border-color: #404040 #ffffff #ffffff #404040;
   box-shadow: inset 1px 1px 0 #808080;
 }
@@ -1605,7 +1607,14 @@ h3 {
   white-space: nowrap;
 }
 
-.os-close {
+.os-titlebar-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 3px;
+}
+
+.os-close,
+.os-min {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1614,6 +1623,11 @@ h3 {
   padding: 0;
   line-height: 1;
   cursor: default;
+}
+
+.os-min {
+  align-items: flex-end;
+  padding-bottom: 3px;
 }
 
 .os-window-body {
@@ -1749,6 +1763,12 @@ h3 {
   background: #dfdfdf;
 }
 
+.os-task-button.active {
+  border-color: #404040 #ffffff #ffffff #404040;
+  background: #b8b8b8;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+
 .os-exit:active,
 .os-task-button:active {
   border-color: #404040 #ffffff #ffffff #404040;
@@ -1864,12 +1884,22 @@ h3 {
   font-weight: 700;
 }
 
-.explorer-row:hover:not(:disabled),
-.explorer-row:focus-visible:not(:disabled) {
+.explorer-row.file {
+  cursor: pointer;
+}
+
+.explorer-row:hover,
+.explorer-row:focus-visible,
+.explorer-row.selected {
   border-color: #000000;
   background: #000080;
   color: #ffffff;
   outline: none;
+}
+
+.explorer-row.selected {
+  outline: 1px dotted #ffffff;
+  outline-offset: -3px;
 }
 
 .explorer-row strong {
@@ -1886,6 +1916,36 @@ h3 {
 
 .explorer-row:disabled {
   opacity: 1;
+}
+
+.explorer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  background: #c0c0c0;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #a0a0a0;
+  padding: 7px;
+  font-size: 12px;
+}
+
+.explorer-actions span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer-actions div {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .explorer-empty {
@@ -1915,5 +1975,14 @@ h3 {
 
   .explorer-row em {
     display: none;
+  }
+
+  .explorer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .explorer-actions div {
+    justify-content: flex-start;
   }
 }

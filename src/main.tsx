@@ -204,6 +204,10 @@ function App() {
               setOsOpen(false);
             }
           }}
+          onPrompt={(text) => {
+            void sendMessage(text);
+            setOsOpen(false);
+          }}
         />
       ) : null}
     </main>
@@ -227,23 +231,25 @@ type FileListing = {
 
 const EXPLORER_PATH_KEY = "ainativeos.explorer.path";
 type OsWindowId = "programs" | "explorer";
-type OsWindowState = { id: OsWindowId; z: number; x: number; y: number };
+type OsWindowState = { id: OsWindowId; z: number; x: number; y: number; minimized: boolean };
 
 const WINDOW_TITLES: Record<OsWindowId, Record<Lang, string>> = {
   programs: { es: "Programas", en: "Programs" },
   explorer: { es: "Explorador", en: "Explorer" },
 };
 
-const INITIAL_WINDOWS: OsWindowState[] = [{ id: "programs", z: 1, x: 22, y: 22 }];
+const INITIAL_WINDOWS: OsWindowState[] = [{ id: "programs", z: 1, x: 22, y: 22, minimized: false }];
 
 function OsDesktop({
   lang,
   onClose,
   onLaunch,
+  onPrompt,
 }: {
   lang: Lang;
   onClose: () => void;
   onLaunch: (app: OsApp) => void;
+  onPrompt: (text: string) => void;
 }) {
   const [windows, setWindows] = useState<OsWindowState[]>(INITIAL_WINDOWS);
   const [zCounter, setZCounter] = useState(2);
@@ -266,20 +272,46 @@ function OsDesktop({
     setWindows((current) => {
       const existing = current.find((windowState) => windowState.id === id);
       if (existing) {
-        return current.map((windowState) => windowState.id === id ? { ...windowState, z } : windowState);
+        return current.map((windowState) => windowState.id === id ? { ...windowState, minimized: false, z } : windowState);
       }
       const position = id === "explorer" ? { x: 88, y: 76 } : { x: 22, y: 22 };
-      return [...current, { id, z, ...position }];
+      return [...current, { id, z, minimized: false, ...position }];
     });
   }
 
   function focusWindow(id: OsWindowId) {
     const z = nextZ();
-    setWindows((current) => current.map((windowState) => windowState.id === id ? { ...windowState, z } : windowState));
+    setWindows((current) => current.map((windowState) => windowState.id === id ? { ...windowState, minimized: false, z } : windowState));
   }
 
   function closeWindow(id: OsWindowId) {
     setWindows((current) => current.filter((windowState) => windowState.id !== id));
+  }
+
+  function minimizeWindow(id: OsWindowId) {
+    setWindows((current) => current.map((windowState) => windowState.id === id ? { ...windowState, minimized: true } : windowState));
+  }
+
+  function toggleTaskbarWindow(id: OsWindowId) {
+    const target = windows.find((windowState) => windowState.id === id);
+    if (!target) {
+      openWindow(id);
+      return;
+    }
+    const focusedWindow = windows
+      .filter((windowState) => !windowState.minimized)
+      .reduce<OsWindowState | null>((focused, windowState) => (
+        !focused || windowState.z > focused.z ? windowState : focused
+      ), null);
+    if (target.minimized) {
+      focusWindow(id);
+      return;
+    }
+    if (focusedWindow?.id === id) {
+      minimizeWindow(id);
+      return;
+    }
+    focusWindow(id);
   }
 
   function moveWindow(id: OsWindowId, x: number, y: number) {
@@ -287,7 +319,7 @@ function OsDesktop({
   }
 
   function startDrag(event: ReactPointerEvent<HTMLElement>, windowState: OsWindowState) {
-    if ((event.target as HTMLElement).closest(".os-close")) {
+    if ((event.target as HTMLElement).closest(".os-close, .os-min")) {
       return;
     }
     event.preventDefault();
@@ -333,6 +365,9 @@ function OsDesktop({
     <div className="os-overlay" ref={overlayRef} role="dialog" aria-modal="true" aria-label={t(lang, "os.title")}>
       <div className="os-desktop-area">
         {windows.map((windowState) => {
+          if (windowState.minimized) {
+            return null;
+          }
           const style = { left: windowState.x, top: windowState.y, zIndex: windowState.z };
           if (windowState.id === "programs") {
             return (
@@ -344,9 +379,14 @@ function OsDesktop({
               >
                 <div className="os-titlebar" onPointerDown={(event) => startDrag(event, windowState)}>
                   <span>{t(lang, "os.title")}</span>
-                  <button className="os-close" onClick={() => closeWindow("programs")} type="button" aria-label={t(lang, "os.close")}>
-                    ✕
-                  </button>
+                  <div className="os-titlebar-actions">
+                    <button className="os-min" onClick={() => minimizeWindow("programs")} type="button" aria-label={t(lang, "os.min")}>
+                      _
+                    </button>
+                    <button className="os-close" onClick={() => closeWindow("programs")} type="button" aria-label={t(lang, "os.close")}>
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 <div className="os-window-body">
                   <p className="os-hint">{t(lang, "os.hint")}</p>
@@ -379,6 +419,8 @@ function OsDesktop({
               lang={lang}
               onClose={() => closeWindow("explorer")}
               onFocus={() => focusWindow("explorer")}
+              onMinimize={() => minimizeWindow("explorer")}
+              onPrompt={onPrompt}
               onTitlebarPointerDown={(event) => startDrag(event, windowState)}
               style={style}
             />
@@ -392,12 +434,17 @@ function OsDesktop({
         </button>
         <div className="os-task-buttons">
           {getTaskbarWindowIds(windows).map((id) => {
-            const isOpen = windows.some((windowState) => windowState.id === id);
+            const windowState = windows.find((state) => state.id === id);
+            const isFocused = Boolean(
+              windowState &&
+              !windowState.minimized &&
+              windowState.z === Math.max(...windows.filter((state) => !state.minimized).map((state) => state.z), 0)
+            );
             return (
               <button
-                className={`os-task-button ${isOpen ? "open" : ""}`}
+                className={`os-task-button ${windowState ? "open" : ""} ${isFocused ? "active" : ""}`}
                 key={id}
-                onClick={() => openWindow(id)}
+                onClick={() => toggleTaskbarWindow(id)}
                 type="button"
               >
                 {WINDOW_TITLES[id][lang]}
@@ -415,20 +462,26 @@ function FileExplorer({
   lang,
   onClose,
   onFocus,
+  onMinimize,
+  onPrompt,
   onTitlebarPointerDown,
   style,
 }: {
   lang: Lang;
   onClose: () => void;
   onFocus: () => void;
+  onMinimize: () => void;
+  onPrompt: (text: string) => void;
   onTitlebarPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
   style: CSSProperties;
 }) {
   const [currentPath, setCurrentPath] = useState(() => readStoredExplorerPath());
   const [listing, setListing] = useState<FileListing | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   useEffect(() => {
+    setSelectedFileName(null);
     try {
       localStorage.setItem(EXPLORER_PATH_KEY, currentPath);
     } catch {
@@ -461,14 +514,26 @@ function FileExplorer({
 
   const pathParts = currentPath ? currentPath.split("/").filter(Boolean) : [];
   const visibleEntries = listing?.entries ?? [];
+  const selectedEntry = visibleEntries.find((entry) => entry.type === "file" && entry.name === selectedFileName) ?? null;
+  const selectedAbsolutePath = selectedEntry && listing
+    ? `${listing.root}/${listing.path ? `${listing.path}/` : ""}${selectedEntry.name}`
+    : null;
+  const selectedActions = selectedEntry && selectedAbsolutePath
+    ? getExplorerActions(lang, selectedEntry.name, selectedAbsolutePath)
+    : [];
 
   return (
     <section className="os-window os-explorer" onPointerDown={onFocus} style={style}>
       <div className="os-titlebar" onPointerDown={onTitlebarPointerDown}>
         <span>{t(lang, "os.explorer.title")}</span>
-        <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
-          ✕
-        </button>
+        <div className="os-titlebar-actions">
+          <button className="os-min" onClick={onMinimize} type="button" aria-label={t(lang, "os.min")}>
+            _
+          </button>
+          <button className="os-close" onClick={onClose} type="button" aria-label={t(lang, "os.close")}>
+            ✕
+          </button>
+        </div>
       </div>
       <div className="os-window-body">
         <div className="explorer-toolbar">
@@ -506,9 +571,13 @@ function FileExplorer({
           ) : (
             visibleEntries.map((entry) => (
               <button
-                className={`explorer-row ${entry.type}`}
-                disabled={entry.type !== "dir"}
+                className={`explorer-row ${entry.type} ${entry.type === "file" && selectedFileName === entry.name ? "selected" : ""}`}
                 key={`${entry.type}:${entry.name}`}
+                onClick={() => {
+                  if (entry.type === "file") {
+                    setSelectedFileName(entry.name);
+                  }
+                }}
                 onDoubleClick={() => {
                   if (entry.type === "dir") {
                     setCurrentPath([currentPath, entry.name].filter(Boolean).join("/"));
@@ -529,9 +598,59 @@ function FileExplorer({
             ))
           )}
         </div>
+        {selectedEntry ? (
+          <div className="explorer-actions">
+            <span>
+              {t(lang, "explorer.selected")}: <strong>{selectedEntry.name}</strong>
+            </span>
+            <div>
+              {selectedActions.map((action) => (
+                <button
+                  className="os-raised-button"
+                  key={action.id}
+                  onClick={() => onPrompt(action.prompt)}
+                  type="button"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
+}
+
+function getExplorerActions(lang: Lang, fileName: string, absolutePath: string) {
+  const actions = [
+    {
+      id: "ask",
+      label: t(lang, "explorer.action.ask"),
+      prompt: lang === "es"
+        ? `Tengo este archivo: "${absolutePath}". ¿Qué puedes hacer con él? Dime las opciones.`
+        : `I have this file: "${absolutePath}". What can you do with it? Tell me the options.`,
+    },
+  ];
+  if (/\.pdf$/i.test(fileName)) {
+    actions.push(
+      {
+        id: "summarize",
+        label: t(lang, "explorer.action.summarize"),
+        prompt: lang === "es"
+          ? `Resume el PDF "${absolutePath}". Si está escaneado usa OCR. Dame los puntos clave.`
+          : `Summarize the PDF "${absolutePath}". If it is scanned, use OCR. Give me the key points.`,
+      },
+      {
+        id: "invoice",
+        label: t(lang, "explorer.action.invoice"),
+        prompt: lang === "es"
+          ? `Extrae los datos de la factura "${absolutePath}": NIF/CIF, IBAN, importes, fechas, nº de factura. Lee el texto y usa la herramienta de extracción.`
+          : `Extract the invoice data from "${absolutePath}": NIF/CIF, IBAN, amounts, dates, invoice number. Read the text and use the extraction tool.`,
+      },
+    );
+  }
+  return actions;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -677,4 +796,8 @@ function statusLabel(status: string, lang: Lang) {
   return t(lang, "status.ready");
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Reuse the React root across Vite HMR updates to avoid the "createRoot called
+// twice on the same container" dev warning.
+const rootContainer = window as unknown as { __aiNativeOsRoot?: ReturnType<typeof createRoot> };
+const root = rootContainer.__aiNativeOsRoot ?? (rootContainer.__aiNativeOsRoot = createRoot(document.getElementById("root")!));
+root.render(<App />);
