@@ -2075,6 +2075,43 @@ h3 {
   font-size: 12px;
 }
 
+.explorer-preview {
+  max-height: 180px;
+  overflow: auto;
+  margin-top: 8px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #808080 #ffffff #ffffff #808080;
+  background: #ffffff;
+  color: #000000;
+  padding: 7px;
+  font-size: 12px;
+}
+
+.explorer-preview pre {
+  margin: 0;
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.explorer-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.explorer-preview-note {
+  margin: 0;
+  color: #404040;
+}
+
+.explorer-preview pre + .explorer-preview-note {
+  margin-top: 6px;
+}
+
 .explorer-actions span {
   min-width: 0;
   overflow: hidden;

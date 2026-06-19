@@ -229,6 +229,14 @@ type FileListing = {
   error?: string;
 };
 
+type FilePreview =
+  | { kind: "loading" }
+  | { kind: "text"; content: string; truncated: boolean; size: number }
+  | { kind: "image"; dataUrl: string; size: number }
+  | { kind: "pdf"; size: number }
+  | { kind: "other"; size: number; reason?: string }
+  | { kind: "error"; error?: string };
+
 const EXPLORER_PATH_KEY = "ainativeos.explorer.path";
 type OsWindowId = "programs" | "explorer";
 type OsWindowState = { id: OsWindowId; z: number; x: number; y: number; minimized: boolean };
@@ -568,6 +576,7 @@ function FileExplorer({
   const [listing, setListing] = useState<FileListing | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [preview, setPreview] = useState<FilePreview | null>(null);
 
   useEffect(() => {
     setSelectedFileName(null);
@@ -604,12 +613,37 @@ function FileExplorer({
   const pathParts = currentPath ? currentPath.split("/").filter(Boolean) : [];
   const visibleEntries = listing?.entries ?? [];
   const selectedEntry = visibleEntries.find((entry) => entry.type === "file" && entry.name === selectedFileName) ?? null;
+  const selectedRelativePath = selectedEntry ? [currentPath, selectedEntry.name].filter(Boolean).join("/") : null;
   const selectedAbsolutePath = selectedEntry && listing
     ? `${listing.root}/${listing.path ? `${listing.path}/` : ""}${selectedEntry.name}`
     : null;
   const selectedActions = selectedEntry && selectedAbsolutePath
     ? getExplorerActions(lang, selectedEntry.name, selectedAbsolutePath)
     : [];
+
+  useEffect(() => {
+    if (!selectedRelativePath) {
+      setPreview(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setPreview({ kind: "loading" });
+    fetch(`/api/file?path=${encodeURIComponent(selectedRelativePath)}`, { signal: controller.signal })
+      .then((response) => response.json() as Promise<FilePreview>)
+      .then((payload) => {
+        if (!controller.signal.aborted) {
+          setPreview(payload);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setPreview({ kind: "error" });
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedRelativePath]);
 
   return (
     <section className="os-window os-explorer" onPointerDown={onFocus} style={style}>
@@ -688,27 +722,65 @@ function FileExplorer({
           )}
         </div>
         {selectedEntry ? (
-          <div className="explorer-actions">
-            <span>
-              {t(lang, "explorer.selected")}: <strong>{selectedEntry.name}</strong>
-            </span>
-            <div>
-              {selectedActions.map((action) => (
-                <button
-                  className="os-raised-button"
-                  key={action.id}
-                  onClick={() => onPrompt(action.prompt)}
-                  type="button"
-                >
-                  {action.label}
-                </button>
-              ))}
+          <>
+            <div className="explorer-preview">
+              <FilePreviewPane lang={lang} preview={preview} />
             </div>
-          </div>
+            <div className="explorer-actions">
+              <span>
+                {t(lang, "explorer.selected")}: <strong>{selectedEntry.name}</strong>
+              </span>
+              <div>
+                {selectedActions.map((action) => (
+                  <button
+                    className="os-raised-button"
+                    key={action.id}
+                    onClick={() => onPrompt(action.prompt)}
+                    type="button"
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         ) : null}
       </div>
     </section>
   );
+}
+
+function FilePreviewPane({ lang, preview }: { lang: Lang; preview: FilePreview | null }) {
+  if (!preview || preview.kind === "loading") {
+    return <p className="explorer-preview-note">{t(lang, "explorer.preview.loading")}</p>;
+  }
+
+  if (preview.kind === "text") {
+    return (
+      <>
+        <pre>{preview.content}</pre>
+        {preview.truncated ? <p className="explorer-preview-note">{t(lang, "explorer.preview.truncated")}</p> : null}
+      </>
+    );
+  }
+
+  if (preview.kind === "image") {
+    return <img src={preview.dataUrl} alt="" />;
+  }
+
+  if (preview.kind === "pdf") {
+    return <p className="explorer-preview-note">{t(lang, "explorer.preview.pdf")}</p>;
+  }
+
+  if (preview.kind === "other") {
+    return (
+      <p className="explorer-preview-note">
+        {t(lang, "explorer.preview.none")} ({formatBytes(preview.size)})
+      </p>
+    );
+  }
+
+  return <p className="explorer-preview-note">{t(lang, "explorer.preview.error")}</p>;
 }
 
 function getExplorerActions(lang: Lang, fileName: string, absolutePath: string) {

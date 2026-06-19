@@ -1,8 +1,8 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readdir, readFile, stat } from "node:fs/promises";
-import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { open, mkdir, readdir, readFile, stat } from "node:fs/promises";
+import { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
 
 type HealthState = "ready" | "warning" | "offline" | "info";
 
@@ -15,6 +15,42 @@ type HealthCheck = {
 
 const CHECK_TIMEOUT_MS = 1800;
 const WORKSPACE_FOLDERS = ["Inbox", "Outputs", "Reports", "OCR", "Receipts", "Drafts", "Logs"];
+const TEXT_PREVIEW_EXTENSIONS = new Set([
+  ".txt",
+  ".md",
+  ".markdown",
+  ".csv",
+  ".tsv",
+  ".json",
+  ".log",
+  ".html",
+  ".htm",
+  ".xml",
+  ".yml",
+  ".yaml",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".sh",
+  ".css",
+  ".ini",
+  ".env",
+  ".rtf",
+]);
+const IMAGE_PREVIEW_MIMES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".bmp": "image/bmp",
+  ".svg": "image/svg+xml",
+};
+const TEXT_PREVIEW_BYTES = 200_000;
+const IMAGE_PREVIEW_MAX_BYTES = 3_000_000;
 
 function withTimeout(url: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController();
@@ -136,6 +172,86 @@ async function listWorkspaceFiles(env: Record<string, string>, requestedPath: st
         entries: [],
         error: error instanceof Error ? error.message : String(error),
       },
+    };
+  }
+}
+
+async function readWorkspaceFilePreview(env: Record<string, string>, requestedPath: string) {
+  const root = await ensureWorkspace(env);
+  const resolvedRoot = resolve(root);
+  const resolvedPath = resolve(resolvedRoot, requestedPath || ".");
+  const insideRoot = resolvedPath === resolvedRoot || resolvedPath.startsWith(`${resolvedRoot}${sep}`);
+
+  if (!insideRoot) {
+    return {
+      status: 400,
+      payload: { kind: "error", error: "Path escapes the workspace root." },
+    };
+  }
+
+  try {
+    const info = await stat(resolvedPath);
+    if (info.isDirectory()) {
+      return {
+        status: 400,
+        payload: { kind: "error", error: "Path is a directory." },
+      };
+    }
+
+    const extension = extname(resolvedPath).toLowerCase();
+    if (TEXT_PREVIEW_EXTENSIONS.has(extension)) {
+      const handle = await open(resolvedPath, "r");
+      try {
+        const buffer = Buffer.alloc(Math.min(info.size, TEXT_PREVIEW_BYTES));
+        const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+        return {
+          status: 200,
+          payload: {
+            kind: "text",
+            content: buffer.subarray(0, bytesRead).toString("utf8"),
+            truncated: info.size > TEXT_PREVIEW_BYTES,
+            size: info.size,
+          },
+        };
+      } finally {
+        await handle.close();
+      }
+    }
+
+    if (extension in IMAGE_PREVIEW_MIMES) {
+      if (info.size > IMAGE_PREVIEW_MAX_BYTES) {
+        return {
+          status: 200,
+          payload: { kind: "other", size: info.size, reason: "too large" },
+        };
+      }
+      const buffer = await readFile(resolvedPath);
+      return {
+        status: 200,
+        payload: {
+          kind: "image",
+          dataUrl: `data:${IMAGE_PREVIEW_MIMES[extension]};base64,${buffer.toString("base64")}`,
+          size: info.size,
+        },
+      };
+    }
+
+    if (extension === ".pdf") {
+      return {
+        status: 200,
+        payload: { kind: "pdf", size: info.size },
+      };
+    }
+
+    return {
+      status: 200,
+      payload: { kind: "other", size: info.size },
+    };
+  } catch (error) {
+    const code = typeof error === "object" && error && "code" in error ? error.code : null;
+    return {
+      status: code === "ENOENT" ? 404 : 500,
+      payload: { kind: "error", error: error instanceof Error ? error.message : String(error) },
     };
   }
 }
@@ -344,6 +460,11 @@ export default defineConfig(({ mode }) => {
           server.middlewares.use("/api/files", async (req, res) => {
             const url = new URL(req.url || "/", "http://127.0.0.1");
             const result = await listWorkspaceFiles(env, url.searchParams.get("path") ?? "");
+            json(res, result.status, result.payload);
+          });
+          server.middlewares.use("/api/file", async (req, res) => {
+            const url = new URL(req.url || "/", "http://127.0.0.1");
+            const result = await readWorkspaceFilePreview(env, url.searchParams.get("path") ?? "");
             json(res, result.status, result.payload);
           });
         },
